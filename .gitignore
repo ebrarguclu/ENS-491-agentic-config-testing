@@ -4,3 +4,6 @@ systems/curl/
 *.gcno
 *.gcov
 .DS_Store
+
+# Verification logs (the summary.md next to them is kept)
+results/verification/*.log
