@@ -15,3 +15,4 @@ results/verification/*.log
 # Long logs of run_config.sh (summary.json and config.yaml are kept)
 results/*/*.log
 results/*/curl_version.txt
+results/*/coverage/

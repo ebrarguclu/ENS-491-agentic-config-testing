@@ -33,6 +33,9 @@ git clone --depth 1 --branch curl-8_17_0 https://github.com/curl/curl.git system
 # 2. Install the YAML reader, inside the repository only
 python3 -m venv .venv
 .venv/bin/pip install pyyaml
+
+# 3. Install lcov (macOS; on Ubuntu: sudo apt install lcov)
+brew install lcov
 ```
 
 ### Running it
@@ -51,8 +54,21 @@ The script:
 1. turns the configuration into `configure` flags, using `models/curl.yaml`,
 2. removes the previous build, then runs `configure` and `make`,
 3. runs curl's tests (`runtests.pl -a -n`, so a failed test does not stop the run),
-4. saves everything in `results/<configuration-name>/`, replacing an earlier run with that
+4. collects code coverage with `lcov`,
+5. saves everything in `results/<configuration-name>/`, replacing an earlier run with that
    name. See [results/README.md](../results/README.md).
+
+### Coverage table (D6)
+
+After running the configurations you want to compare:
+
+```sh
+.venv/bin/python scripts/config_tools.py table results
+```
+
+This writes [results/coverage_table.md](../results/coverage_table.md) from the
+`summary.json` of every run. To compare configurations fairly, run them all with the same
+tests. On our Mac the full test suite takes about 3 to 8 minutes per configuration.
 
 | Exit code | Meaning |
 |---|---|
@@ -71,5 +87,8 @@ The script:
   its own `PATH`. Nothing outside the script changes.
 - Only one build can exist at a time, because all runs share `systems/curl`. Do not run
   two copies of the script at once.
+- Coverage uses `CFLAGS="--coverage -O0 -g"`, not curl's `--enable-code-coverage`. With
+  Apple Clang that flag produces LLVM coverage data, which `lcov` cannot read.
+- Coverage counts can differ by a few lines between two runs of the same configuration.
 
 Tested on macOS (Apple Silicon). Not yet tried on Linux.
