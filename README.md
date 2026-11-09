@@ -98,14 +98,14 @@ in detail at source-code level. The full comparison of all seven systems is in
 
 | # | Deliverable | Output | Owner | Status |
 |---|---|---|---|---|
-| D1 | Repository setup | This repository | Fethiye Ebrar Güçlü, Safiye Nur Narman | Done |
-| D2 | List of candidate systems | [docs/candidates.md](docs/candidates.md) | All | Done |
+| D1 | Repository setup | This repository | Safiye Nur Narman | Done |
+| D2 | List of candidate systems | [docs/candidates.md](docs/candidates.md) | Safiye Nur Narman | Done |
 | D3 | Choice of system | [docs/selection.md](docs/selection.md) | Safiye Nur Narman | Done (curl) |
-| D4 | Configuration model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Rana Keleş | Draft, in review |
-| D5 | Scripts that build curl and run its tests for a given configuration | `scripts/run_config.sh` | Fethiye Ebrar Güçlü | Next |
-| D6 | Coverage numbers for different configurations | `results/coverage_table.md` | Safiye Nur Narman | Planned |
-| D7 | Tests written by AI, with before/after coverage | `tests/generated/` | All (one AI tool each) | Planned |
-| D8 | Live demo for the advisor | | Rana Keleş | Planned |
+| D4 | Configuration model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Safiye Nur Narman | Draft, in review |
+| D5 | Scripts that build curl and run its tests for a given configuration | [scripts/run_config.sh](scripts/run_config.sh) | Rana Keleş | Done |
+| D6 | Coverage numbers for different configurations | [results/coverage_table.md](results/coverage_table.md) | Rana Keleş | Done |
+| D7 | Tests written by AI, with before/after coverage | `tests/generated/` | Fethiye Ebrar Güçlü | Planned |
+| D8 | Live demo for the advisor | | Fethiye Ebrar Güçlü | Planned |
 
 ## Where we are now
 
