@@ -1,0 +1,5 @@
+name: no-proxy
+system: curl
+values:
+  tls: openssl
+  proxy: disabled

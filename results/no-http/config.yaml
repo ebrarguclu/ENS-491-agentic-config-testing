@@ -1,0 +1,5 @@
+name: no-http
+system: curl
+values:
+  tls: openssl
+  http: disabled

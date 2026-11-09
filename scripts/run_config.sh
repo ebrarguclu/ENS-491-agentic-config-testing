@@ -14,7 +14,8 @@
 #   build.log          output of configure and make
 #   tests.log          output of curl's test runner
 #   curl_version.txt   `curl --version` of the curl that was really built
-#   summary.json       build result and passed/failed/skipped counts
+#   summary.json       build result, passed/failed/skipped counts and coverage
+#   coverage/          lcov.info (line-by-line coverage data) and lcov.log
 #
 # Exit code: 0 = built and no test failed, 1 = build failed or a test failed,
 # 2 = could not start (bad arguments, missing setup).
@@ -49,6 +50,8 @@ TEST_ARGS=("$@")
 PATH="$(echo "$PATH" | tr ':' '\n' | grep -vi xampp | paste -sd: -)"
 export PATH
 
+command -v lcov >/dev/null 2>&1 || { echo "error: lcov not found (see 'First-time setup' in scripts/README.md)"; exit 2; }
+
 # On macOS, Homebrew's plain `openssl` is version 4, which curl 8.17.0 cannot use.
 OPENSSL_FLAG="--with-openssl"
 if [ "$(uname)" = "Darwin" ] && command -v brew >/dev/null 2>&1; then
@@ -75,6 +78,7 @@ done <<< "$FLAGS_OUTPUT"
 RESULTS="$REPO_ROOT/results/$NAME"
 mkdir -p "$RESULTS"
 rm -f "$RESULTS/build.log" "$RESULTS/tests.log" "$RESULTS/curl_version.txt" "$RESULTS/summary.json"
+rm -rf "$RESULTS/coverage"
 cp "$CONFIG" "$RESULTS/config.yaml"
 BUILD_LOG="$RESULTS/build.log"
 
@@ -91,17 +95,22 @@ SECONDS=0
 
 # Remove the previous build, so nothing from another configuration is left behind.
 [ -f "$CURL_DIR/Makefile" ] && (cd "$CURL_DIR" && make distclean) >/dev/null 2>&1
+# Coverage counters from another configuration would mix into this one.
+(cd "$CURL_DIR" && find . \( -name '*.gcda' -o -name '*.gcno' \) -delete)
 if [ ! -x "$CURL_DIR/configure" ]; then
   echo "Preparing the build files (autoreconf)..."
   (cd "$CURL_DIR" && autoreconf -fi) >> "$BUILD_LOG" 2>&1
 fi
 
-echo "[1/3] configure..."
-(cd "$CURL_DIR" && ./configure "${FLAGS[@]}") >> "$BUILD_LOG" 2>&1
+echo "[1/4] configure..."
+# --coverage: count how many times each line runs (gcov format, with gcc and with clang).
+# -O0: no optimisation, so the counts match the source lines.
+(cd "$CURL_DIR" && CPPFLAGS="-DNDEBUG" CFLAGS="--coverage -O0 -g" LDFLAGS="--coverage" \
+  ./configure "${FLAGS[@]}") >> "$BUILD_LOG" 2>&1
 CONFIGURE_EXIT=$?
 
 if [ "$CONFIGURE_EXIT" -eq 0 ]; then
-  echo "[2/3] make..."
+  echo "[2/4] make..."
   (cd "$CURL_DIR" && make -j"$JOBS") >> "$BUILD_LOG" 2>&1
   MAKE_EXIT=$?
 fi
@@ -114,18 +123,40 @@ BUILD_SECONDS=$SECONDS
 
 # ---- 5. run the tests --------------------------------------------------------
 if [ "$TESTS_BUILD_EXIT" = "0" ]; then
-  echo "[3/3] Running tests: ${TEST_ARGS[*]:-all}..."
+  echo "[3/4] Running tests: ${TEST_ARGS[*]:-all}..."
   SECONDS=0
   # -a: keep going after a failed test. -n: do not use valgrind.
   (cd "$CURL_DIR/tests" && perl runtests.pl -a -n ${TEST_ARGS[@]+"${TEST_ARGS[@]}"}) \
     > "$RESULTS/tests.log" 2>&1
   RUNTESTS_EXIT=$?
   TEST_SECONDS=$SECONDS
+
+  # ---- 6. collect coverage ---------------------------------------------------
+  echo "[4/4] Collecting coverage..."
+  COVERAGE="$RESULTS/coverage"
+  mkdir -p "$COVERAGE"
+  (
+    cd "$CURL_DIR" || exit 1
+    # The zero-count map of all compiled code, so code the tests never reach still counts.
+    lcov --capture --initial --directory lib --directory src --output-file "$COVERAGE/base.info"
+    # The real counts. This fails if no test ran at all, and then only the map is used.
+    lcov --capture --directory lib --directory src --output-file "$COVERAGE/tests.info"
+    if [ -s "$COVERAGE/tests.info" ]; then
+      lcov --add-tracefile "$COVERAGE/base.info" --add-tracefile "$COVERAGE/tests.info" \
+        --output-file "$COVERAGE/all.info"
+    else
+      cp "$COVERAGE/base.info" "$COVERAGE/all.info"
+    fi
+    # Keep curl's own code only, not system headers.
+    lcov --extract "$COVERAGE/all.info" "$CURL_DIR/lib/*" "$CURL_DIR/src/*" \
+      --output-file "$COVERAGE/lcov.info"
+  ) > "$RESULTS/coverage/lcov.log" 2>&1
+  rm -f "$COVERAGE/base.info" "$COVERAGE/tests.info" "$COVERAGE/all.info"
 else
   echo "Build failed, see $BUILD_LOG"
 fi
 
-# ---- 6. write summary.json ---------------------------------------------------
+# ---- 7. write summary.json ---------------------------------------------------
 "$PYTHON" "$TOOLS" summary "$RESULTS" \
   --name "$NAME" \
   --machine "$(uname -sm)" \

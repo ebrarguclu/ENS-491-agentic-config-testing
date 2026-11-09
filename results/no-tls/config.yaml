@@ -1,0 +1,4 @@
+name: no-tls
+system: curl
+values:
+  tls: none
