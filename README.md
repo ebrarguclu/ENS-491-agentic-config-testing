@@ -98,6 +98,8 @@ selected as the subject system. It builds from source in about 80 seconds,
 and its test suite runs on our setup ([build check](docs/candidates.md#build-check-curl)).
 A first configuration space model of curl (22 compile-time options, 6
 constraints) is drafted and every constraint was confirmed by running the
-build system ([verification](models/curl_verification.md)). Next steps:
+build system ([verification](models/curl_verification.md)). A step-by-step
+account of what we did and why is in [docs/progress-d1-d4.md](docs/progress-d1-d4.md).
+Next steps:
 review the model as a team (D4) and write the build-and-test automation
 script that reads it (D5).
