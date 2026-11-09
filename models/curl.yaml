@@ -1,8 +1,10 @@
-# Configuration space model of curl (deliverable D4)
-# Format: see schema.md. Verification log: see curl_verification.md.
+# The configuration model of curl (deliverable D4)
 #
-# Scope: 22 compile-time options (11 protocols, 9 features, 2 libraries).
-# Every entry points to the line(s) in curl's configure.ac where it is implemented.
+# How to read this file: see schema.md.
+# How every rule was checked: see curl_verification.md.
+#
+# It covers 22 build-time options: 11 protocols, 9 features and 2 libraries.
+# Every entry points to the lines in curl's configure.ac where it is defined.
 
 system: curl
 version: curl-8_17_0

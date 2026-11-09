@@ -1,225 +1,190 @@
-# D2 — Candidate Systems
+# Candidate Systems (D2)
 
-We compared seven open-source systems before choosing the one we will work on for the
-rest of the project. This page explains what each system is, how it can be configured,
-what its test suite looks like, and why it did or did not fit our project.
+Before starting the real work, we needed one open-source program to study for the rest of
+the project. We compared seven candidates. This page explains how we compared them, what
+each one is like, and why we ended up with **curl**. The full reasoning behind the final
+choice is in [selection.md](selection.md).
 
-**Result:** we selected **curl**. The full rationale is in [selection.md](selection.md).
+If a term is unfamiliar, see [Key terms](../README.md#key-terms) in the main README.
 
-## Key terms
+## How we compared them
 
-- **Compile-time option:** a choice made *when the program is built*. It decides which
-  code is included in the binary at all. Example: building curl with `--disable-ftp`
-  produces a curl that has no FTP code inside it.
-- **Runtime option:** a choice made *when the program is run*, through command-line
-  flags or a configuration file. Example: `curl --compressed https://example.com`.
-- **Test suite:** the tests that come with the project and are used by its own
-  developers.
-- **Ground truth:** an official, reliable source (documentation, build files, test
-  metadata) that we can compare an AI-generated configuration model against.
+| Criterion | The question we asked | Why it matters |
+|---|---|---|
+| Configuration space | Does it have many options, ideally both at build time and at run time? | No options, no interactions to study |
+| Test suite | Does it come with tests we can run for each configuration? | We need tests to measure coverage (D6) and to add AI-written tests to (D7) |
+| Build effort | Can we build it ourselves with normal tools? | We will build it many times with different options (D5) |
+| Ground truth | Is there an official source to check an AI's answers against? | Without it we cannot say whether the AI was right (Stage 1 and 2) |
 
-## What we looked for
+## Comparison
 
-1. **A large configuration space:** many options, ideally both compile-time and runtime.
-2. **A usable test suite:** tests we can run once per configuration and measure
-   coverage on.
-3. **Low build effort:** the system should build from source with standard tools on our
-   own machines.
-4. **Ground truth:** some official source we can use to check whether an AI got the
-   configuration space right.
-
-## At a glance
-
-| System | Language | Compile-time options | Runtime options | Build effort | Decision |
+| System | Language | Build-time options | Run-time options | Build effort | Decision |
 |---|---|---|---|---|---|
-| **curl** | C | Yes, ~115 | Yes, 273 CLI + 291 API | Easy (verified) | ✅ Selected |
-| SQLite | C | Yes, many | Yes, PRAGMAs | Easy | Runner-up |
-| Apache httpd | C | Yes, per module | Yes, `httpd.conf` | Hard | Not selected |
-| BusyBox | C | Yes, hundreds | Yes, per-tool flags | Easy on Linux only | Not selected |
+| **curl** | C | Yes, about 115 | Yes, 273 command-line + 291 library | Easy (we tried it) | **Selected** |
+| SQLite | C | Yes, many | Yes, `PRAGMA` commands | Easy | Runner-up |
+| Apache httpd | C | Yes, one per module | Yes, `httpd.conf` | Hard | Not selected |
+| BusyBox | C | Yes, hundreds | Yes, flags of each tool | Easy, but only on Linux | Not selected |
 | ripgrep | Rust | Very few | Yes, many | Very easy | Not selected |
-| Apache ZooKeeper | Java | No | Yes, ~40 | Medium | Not selected |
-| ESLint | JavaScript | No | Yes, nested config | Easy | Not selected |
+| Apache ZooKeeper | Java | None | Yes, about 40 | Medium | Not selected |
+| ESLint | JavaScript | None | Yes, a nested config file | Easy | Not selected |
 
-curl numbers are counted on the `curl-8_17_0` source tree. See
-[selection.md](selection.md#1-a-large-two-level-configuration-space) for exactly where
-each number comes from.
+The curl numbers were counted in the source code of version `curl-8_17_0`.
+[selection.md](selection.md#1-it-has-a-big-configuration-space-at-two-levels) shows exactly
+where each number comes from.
 
-## Candidate details
+We studied curl, ZooKeeper and ESLint at source-code level. For the other four we read
+their documentation, which was enough to see whether they fit.
 
-### curl ✅ selected
+## The systems one by one
 
-**What it is.** A command-line tool and library (libcurl) for transferring data over the
-internet. It supports more than 20 protocols, including HTTP(S), FTP, SMTP and IMAP, and
-is built into a very large number of devices and applications.
+### curl (selected)
 
-**How it is configured.**
-- *Compile-time:* before building, `./configure` flags decide which protocols and
-  features are compiled in and which libraries are used. Examples: `--disable-ftp`,
-  `--disable-cookies`, `--with-openssl`. There are about 115 such flags.
-- *Runtime:* 273 command-line options (e.g. `--proxy`, `--compressed`) and 291 options
-  in the libcurl API (`curl_easy_setopt`).
+curl is a tool and a library (libcurl) for downloading and uploading data over the
+internet. It speaks more than 20 protocols, such as HTTP(S), FTP, SMTP and IMAP, and it is
+built into a huge number of devices and applications.
 
-**Test suite.** About 1,890 test cases. Each test is a small text file that describes
-the command to run, the server response and the expected result. 859 of them also list
-the build features they need (e.g. `proxy`, `SSL`, `cookies`). If a build does not have
-a required feature, the test runner skips that test automatically.
+| | Examples |
+|---|---|
+| Build-time options (about 115) | `--disable-ftp` builds curl without FTP. `--with-openssl` chooses OpenSSL for encryption |
+| Run-time options (273 + 291) | `curl --proxy ...`, `curl --compressed ...`, or the same settings through the library API |
+| Tests | About 1,890 tests. Each test is a small text file. 859 of them also list the features they need, and a test is skipped automatically if the build does not have them |
 
-**Example from the source.** Enabling LDAPS while LDAP is disabled does not cause an
-error. `configure` only prints *"LDAP needs to be enabled to support LDAPS"*, silently
-turns LDAPS off and continues (`configure.ac`, lines 788–817). This is exactly the kind
-of hidden interaction between options that our project is about.
+> Hidden rule we found: if you ask for LDAPS but turn LDAP off, curl's build does not
+> fail. It prints one line, *"LDAP needs to be enabled to support LDAPS"*, and quietly
+> builds curl without LDAPS (`configure.ac`, lines 788 to 817).
 
-**Fit for our project.**
-- ➕ Both compile-time and runtime options, at a large scale.
-- ➕ The tests themselves state which features they need, which gives us ground truth
-  for analysing the existing test suite (Stage 2).
-- ➕ Real constraints between options are written in the build system.
-- ➕ We built it and ran its tests successfully ([build check](#build-check-curl)).
-- ➖ Some tests need extra local servers, and the full suite takes a long time, so we
-  will run selected ranges of tests during development.
+| Good for our project | Harder for our project |
+|---|---|
+| Many options, both at build time and at run time | Some tests need extra local servers |
+| Tests say which features they need, so we know which configuration affects which test | Running all tests takes a long time, so we run selected ranges while developing |
+| Real rules between options, some of them silent | |
+| We built it and ran its tests successfully ([see below](#build-check-curl)) | |
 
 ### SQLite (runner-up)
 
-**What it is.** A small SQL database engine that is compiled directly into applications
-instead of running as a separate server. It is used in phones, browsers and many
-desktop programs.
+SQLite is a small SQL database that lives inside other programs instead of running as a
+separate server. It is used in phones, web browsers and many desktop applications.
 
-**How it is configured.**
-- *Compile-time:* C macros passed to the compiler. Examples:
-  `-DSQLITE_OMIT_ALTERTABLE` removes the `ALTER TABLE` command, and
-  `-DSQLITE_ENABLE_FTS5` adds full-text search.
-- *Runtime:* `PRAGMA` statements, e.g. `PRAGMA journal_mode=WAL`.
+| | Examples |
+|---|---|
+| Build-time options | `-DSQLITE_OMIT_ALTERTABLE` removes the `ALTER TABLE` command. `-DSQLITE_ENABLE_FTS5` adds full-text search |
+| Run-time options | `PRAGMA` commands, for example `PRAGMA journal_mode=WAL` |
+| Tests | A very large test suite written in Tcl. Tests check which features exist with `ifcapable` blocks inside the test code |
 
-**Test suite.** A very large test suite written in Tcl. Tests check which features are
-available with `ifcapable` blocks inside the test scripts.
-
-**Fit for our project.**
-- ➕ Easy to build, with many well-documented compile-time options.
-- ➕ SQLite's own documentation says that not every combination of options can be
-  tested, which matches our motivation.
-- ➖ Feature requirements are written inside Tcl code rather than as separate test
-  metadata, so they are harder to extract reliably.
-- ➖ Fewer runtime options than curl.
+| Good for our project | Harder for our project |
+|---|---|
+| Easy to build, many well-documented build-time options | Feature requirements are hidden inside Tcl code, so they are harder to extract reliably |
+| SQLite's own documentation admits that not every combination of options can be tested | Fewer run-time options than curl |
 
 ### Apache httpd
 
-**What it is.** The Apache HTTP Server, one of the most widely used web servers.
+The Apache HTTP Server is one of the most widely used web servers.
 
-**How it is configured.**
-- *Compile-time:* `./configure --enable-<module>` chooses which modules are built, e.g.
-  `--enable-ssl`.
-- *Runtime:* directives in the `httpd.conf` file, e.g. `Listen 80` or `LoadModule`.
+| | Examples |
+|---|---|
+| Build-time options | `./configure --enable-ssl` and similar flags choose which modules are built |
+| Run-time options | Lines in the `httpd.conf` file, for example `Listen 80` or `LoadModule ...` |
+| Tests | A separate Perl-based test framework (Apache::Test), kept apart from the server code |
 
-**Test suite.** A separate Perl-based framework (Apache::Test), maintained apart from
-the server source code.
-
-**Fit for our project.**
-- ➕ Realistic system with both compile-time and runtime options.
-- ➖ Harder to build: needs the APR, APR-util and PCRE libraries.
-- ➖ Setting up the separate test framework adds significant effort.
+| Good for our project | Harder for our project |
+|---|---|
+| Realistic, with options at both levels | Needs extra libraries to build (APR, APR-util, PCRE) |
+| | Setting up the separate test framework takes a lot of effort |
 
 ### BusyBox
 
-**What it is.** A single small program that bundles many standard Unix tools (`ls`,
-`cp`, `grep`, …). It is widely used in embedded Linux systems such as routers.
+BusyBox packs many standard Unix tools (`ls`, `cp`, `grep` and so on) into one small
+program. It is common in small devices such as routers.
 
-**How it is configured.**
-- *Compile-time:* a Kconfig menu (the same system the Linux kernel uses, opened with
-  `make menuconfig`) to choose which tools and features to include. Depending on the
-  version, there are several hundred to over a thousand options.
-- *Runtime:* the command-line flags of each tool.
+| | Examples |
+|---|---|
+| Build-time options | A menu (`make menuconfig`, the same system the Linux kernel uses) to pick tools and features. Several hundred to over a thousand options, depending on the version |
+| Run-time options | The command-line flags of each tool |
+| Tests | Shell-script tests in the `testsuite/` folder |
 
-**Test suite.** Shell-script tests in the `testsuite/` folder.
-
-**Fit for our project.**
-- ➕ A large, formally described configuration space with explicit dependencies.
-- ➖ Builds reliably mainly on Linux; building on macOS is problematic.
-- ➖ The test suite is fairly limited compared to the size of the configuration space.
+| Good for our project | Harder for our project |
+|---|---|
+| Very large configuration space with clearly written dependencies | Builds reliably only on Linux, not on macOS |
+| | Small test suite compared to the number of options |
 
 ### ripgrep
 
-**What it is.** A fast text-search tool written in Rust, similar to `grep`.
+ripgrep is a fast text-search tool written in Rust, similar to `grep`.
 
-**How it is configured.**
-- *Compile-time:* a few Cargo features, e.g. `pcre2`, which adds a second regular
-  expression engine.
-- *Runtime:* many command-line flags, e.g. `--ignore-case` or `--hidden`.
+| | Examples |
+|---|---|
+| Build-time options | A few Cargo features, for example `pcre2`, which adds a second regular-expression engine |
+| Run-time options | Many flags, for example `--ignore-case` or `--hidden` |
+| Tests | Run with `cargo test` |
 
-**Test suite.** Run with `cargo test`.
-
-**Fit for our project.**
-- ➕ Very easy to build, with clean and readable code.
-- ➖ Only a handful of compile-time options, so the compile-time space is too small
-  for our purposes.
+| Good for our project | Harder for our project |
+|---|---|
+| Very easy to build, clean and readable code | Only a handful of build-time options, too few for our purposes |
 
 ### Apache ZooKeeper
 
-**What it is.** A coordination service for distributed systems. Clusters use it to
-share configuration, naming and synchronisation information.
+ZooKeeper helps groups of servers (clusters) share settings and stay in sync.
 
-**How it is configured.**
-- *Compile-time:* none.
-- *Runtime:* about 40 `key=value` settings in the `zoo.cfg` file, read at startup
-  (`QuorumPeerConfig.java`). Examples: `tickTime`, `clientPort`, `dataDir`.
+| | Examples |
+|---|---|
+| Build-time options | None |
+| Run-time options | About 40 `key=value` settings in `zoo.cfg`, read at start-up (`QuorumPeerConfig.java`), such as `tickTime`, `clientPort`, `dataDir` |
+| Tests | JUnit tests, run with Maven |
 
-**Test suite.** JUnit tests, run with Maven.
+> Hidden rule we found: `clientPortAddress` only works if `clientPort` is also set, and
+> `tickTime` silently decides the default values of `minSessionTimeout` and
+> `maxSessionTimeout`.
 
-**Example from the source.** `clientPortAddress` only works if `clientPort` is also set,
-and `tickTime` silently determines the default values of `minSessionTimeout` and
-`maxSessionTimeout`.
-
-**Fit for our project.**
-- ➕ Realistic constraints between runtime settings.
-- ➖ No compile-time options.
-- ➖ Long-running test suite and a heavier Java/Maven setup.
+| Good for our project | Harder for our project |
+|---|---|
+| Realistic rules between settings | No build-time options at all |
+| | Tests take long, and the Java/Maven setup is heavier |
 
 ### ESLint
 
-**What it is.** A tool that checks JavaScript code for problems and style issues.
+ESLint checks JavaScript code for mistakes and style problems.
 
-**How it is configured.**
-- *Compile-time:* none.
-- *Runtime:* a configuration file (`eslint.config.js`, the "flat config") that is a
-  JavaScript object with 7 top-level keys and nested sub-settings, validated against a
-  schema (`flat-config-schema.js`).
+| | Examples |
+|---|---|
+| Build-time options | None |
+| Run-time options | A config file (`eslint.config.js`) holding a JavaScript object with 7 top-level keys and nested settings, checked against a schema (`flat-config-schema.js`) |
+| Tests | A large unit test suite, run with `npm test` |
 
-**Test suite.** A large unit test suite, run with `npm test`.
+> Hidden rule we found: old-style (eslintrc) keys are rejected in the new config format,
+> and two similar options, `reportUnusedDisableDirectives` and
+> `reportUnusedInlineConfigs`, treat `true`/`false` values differently.
 
-**Example from the source.** Legacy (eslintrc-style) keys are explicitly rejected in the
-flat config, and similar sibling options such as `reportUnusedDisableDirectives` and
-`reportUnusedInlineConfigs` treat boolean values inconsistently.
-
-**Fit for our project.**
-- ➕ Easy to install and run.
-- ➖ No compile-time options.
-- ➖ Its configuration is nested data rather than a set of options with values, which
-  is harder to model as a classic configuration space.
+| Good for our project | Harder for our project |
+|---|---|
+| Easy to install and run | No build-time options |
+| | Its settings are nested data rather than a list of options with values, which is hard to describe as a classic configuration space |
 
 ## Build check: curl
 
-Before committing to curl, we built it from source and ran part of its test suite.
+Before committing to curl, we built it and ran part of its tests to make sure this is
+actually possible on our machines.
 
 | | |
 |---|---|
-| Version | git tag `curl-8_17_0` |
-| Environment | Ubuntu 24.04.5, gcc 13.3.0, Perl 5.38, 2 CPU cores |
-| Dependencies | autoconf, automake, libtool (needed for a git checkout), OpenSSL and zlib development headers, Perl (for tests) |
-| Configuration | `./configure --with-openssl --without-libpsl` (libpsl was not installed, so it was disabled explicitly) |
+| Version | `curl-8_17_0` (a git tag, so everyone uses exactly the same code) |
+| Machine | Ubuntu 24.04.5, gcc 13.3.0, Perl 5.38, 2 CPU cores |
+| Needed tools | autoconf, automake, libtool (because we build from a git checkout), OpenSSL and zlib development files, Perl (for the tests) |
+| Options used | `./configure --with-openssl --without-libpsl` (libpsl was not installed, so we turned it off) |
 
 | Step | Command | Result | Time |
 |---|---|---|---|
-| Generate build files | `autoreconf -fi` | OK | 7 s |
-| Configure | `./configure --with-openssl --without-libpsl` | OK | 17 s |
+| Prepare the build files | `autoreconf -fi` | OK | 7 s |
+| Choose the options | `./configure --with-openssl --without-libpsl` | OK | 17 s |
 | Compile | `make -j2` | OK | 57 s |
-| Build test tools | `make -C tests` | OK | — |
-| Run tests | `cd tests && perl runtests.pl 1 to 100` | 99 of 99 run tests passed, 1 skipped | 105 s |
+| Build the test tools | `make -C tests` | OK | |
+| Run tests 1 to 100 | `cd tests && perl runtests.pl 1 to 100` | 99 passed, 1 skipped | 105 s |
 
-The skipped test (96) needs memory tracking, which is only compiled in with
-`--enable-curldebug`. Our default build did not include it, so the runner skipped the
-test. This is a first, concrete example of what the project is about: **a build option
-decides which tests run at all.**
+The skipped test (number 96) needs a debugging feature that only exists when curl is
+built with `--enable-curldebug`. Our build did not include it, so the test was skipped.
+This was our first small example of the main idea of the project: **a build option
+decides whether a test runs at all.**
 
-The build reports which protocols and features it contains (`curl --version`):
+The finished curl lists what it contains (`curl --version`):
 
 ```
 Protocols: dict file ftp ftps gopher gophers http https imap imaps ipfs ipns mqtt pop3
@@ -228,14 +193,14 @@ Features:  alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM SS
            threadsafe TLS-SRP UnixSockets
 ```
 
-### Notes for building on your own machine
+### Tips for building on your own machine
 
-- `configure` refuses to run until a TLS library is chosen. Use `--with-openssl`, or
-  `--without-ssl` for a build without TLS.
+- `configure` will not start until you choose an encryption (TLS) library. Use
+  `--with-openssl`, or `--without-ssl` if you want no encryption at all.
 - If `libpsl` is not installed, add `--without-libpsl`.
-- On macOS, use Homebrew's `openssl@3`, not the default `openssl` (now 4.x, which curl
-  8.17.0 does not compile against):
+- On macOS, use Homebrew's `openssl@3`, not the default `openssl`. The default is now
+  version 4, and curl 8.17.0 does not compile with it:
   `./configure --with-openssl=$(brew --prefix openssl@3) --without-libpsl`
 - On Windows, use WSL.
-- Each test takes about one second. While developing, run a range of tests (e.g.
-  `1 to 100`) instead of the full suite.
+- Each test takes about one second. While developing, run a range such as `1 to 100`
+  instead of all tests.

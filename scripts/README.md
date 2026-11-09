@@ -1,26 +1,33 @@
 # scripts/
 
-Automation scripts (deliverables **D5** and **D6**), generated with AI support and
-reviewed by the team.
+Scripts that do the repetitive work for us: building curl, running its tests and
+checking our model. They are written with AI help and reviewed by the team.
 
-## Available
+## Ready to use
 
-| Script | Purpose |
+| Script | What it does |
 |---|---|
-| [`verify_curl_constraints.sh`](verify_curl_constraints.sh) | Re-checks every constraint and effect in `models/curl.yaml` by running curl's `configure` (13 checks). Run from the repository root: `bash scripts/verify_curl_constraints.sh` |
+| [verify_curl_constraints.sh](verify_curl_constraints.sh) | Re-checks every rule and side effect in `models/curl.yaml` by running curl's `configure` with combinations that break them (13 checks). Takes a few minutes and saves the results in `results/verification/` |
 
-## Planned (D5)
+How to run it, from the repository root (curl must be downloaded into `systems/curl`
+first, see [systems/README.md](../systems/README.md)):
 
-Planned interface:
+```sh
+bash scripts/verify_curl_constraints.sh
+```
+
+It works on Linux and macOS. On macOS it automatically uses Homebrew's `openssl@3`.
+
+## Coming next (D5)
 
 ```sh
 scripts/run_config.sh <configuration-file>
 ```
 
-Given one configuration (a set of option values that follows `models/schema.md`), the
-script will:
+You give it a configuration file (see [models/schema.md](../models/schema.md#configuration-files)),
+and it will:
 
-1. configure and build curl with those options,
-2. run the curl test suite (or a selected range of tests),
-3. collect code coverage (D6),
-4. write everything to `results/<configuration-name>/`.
+1. turn the configuration into `configure` flags and build curl,
+2. run curl's tests (all of them, or a chosen range),
+3. measure code coverage (D6),
+4. save everything in `results/<configuration-name>/`.
