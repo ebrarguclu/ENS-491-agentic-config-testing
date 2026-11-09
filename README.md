@@ -18,8 +18,8 @@
 Modern software systems are highly configurable, often exposing dozens to
 thousands of configuration options (compile-time flags, runtime properties,
 CLI arguments, etc.). While individual options are usually well tested in
-isolation, the *interactions* between options — cases where a particular
-combination of option values produces unexpected or undocumented behavior —
+isolation, the *interactions* between options, cases where a particular
+combination of option values produces unexpected or undocumented behavior,
 are far harder to detect and are frequently missed by existing test suites.
 
 This project investigates whether an **agentic AI system** (an LLM-driven
