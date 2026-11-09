@@ -1,0 +1,73 @@
+{
+  "name": "no-ftp",
+  "machine": "Darwin arm64",
+  "curl_source": "curl-8_17_0",
+  "date": "2026-11-09 14:15",
+  "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-ftp",
+  "build": {
+    "ok": true,
+    "configure_exit": 0,
+    "make_exit": 0,
+    "tests_build_exit": 0,
+    "seconds": 48
+  },
+  "tests": {
+    "selection": "1 to 100",
+    "runtests_exit": 0,
+    "seconds": 29,
+    "ran": 97,
+    "passed": 97,
+    "failed": 0,
+    "skipped": 3,
+    "failed_tests": [],
+    "skip_reasons": {
+      "curl lacks ftp server support": 1,
+      "curl lacks ftp support": 1,
+      "curl lacks TrackMemory support": 1
+    }
+  },
+  "built": {
+    "version": "curl 8.17.0-DEV (aarch64-apple-darwin25.6.0) libcurl/8.17.0-DEV OpenSSL/3.6.2 zlib/1.2.12 nghttp2/1.68.0",
+    "protocols": [
+      "dict",
+      "file",
+      "gopher",
+      "gophers",
+      "http",
+      "https",
+      "imap",
+      "imaps",
+      "ipfs",
+      "ipns",
+      "ldap",
+      "ldaps",
+      "mqtt",
+      "pop3",
+      "pop3s",
+      "rtsp",
+      "smb",
+      "smbs",
+      "smtp",
+      "smtps",
+      "telnet",
+      "tftp",
+      "ws",
+      "wss"
+    ],
+    "features": [
+      "alt-svc",
+      "AsynchDNS",
+      "HSTS",
+      "HTTP2",
+      "HTTPS-proxy",
+      "IPv6",
+      "Largefile",
+      "libz",
+      "NTLM",
+      "SSL",
+      "threadsafe",
+      "TLS-SRP",
+      "UnixSockets"
+    ]
+  }
+}

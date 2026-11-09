@@ -1,0 +1,5 @@
+name: no-ftp
+system: curl
+values:
+  tls: openssl
+  ftp: disabled

@@ -1,0 +1,4 @@
+name: default
+system: curl
+values:
+  tls: openssl
