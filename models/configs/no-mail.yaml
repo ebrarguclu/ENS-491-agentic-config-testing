@@ -1,0 +1,7 @@
+name: no-mail
+system: curl
+values:
+  tls: openssl
+  smtp: disabled
+  imap: disabled
+  pop3: disabled

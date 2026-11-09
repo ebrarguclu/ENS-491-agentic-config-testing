@@ -1,0 +1,5 @@
+name: no-cookies
+system: curl
+values:
+  tls: openssl
+  cookies: disabled

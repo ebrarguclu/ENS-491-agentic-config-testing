@@ -2,28 +2,55 @@
   "name": "no-ftp",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 14:15",
+  "date": "2026-11-09 14:48",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-ftp",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 48
+    "seconds": 45
   },
   "tests": {
-    "selection": "1 to 100",
+    "selection": "all",
     "runtests_exit": 0,
-    "seconds": 29,
-    "ran": 97,
-    "passed": 97,
+    "seconds": 360,
+    "ran": 1330,
+    "passed": 1330,
     "failed": 0,
-    "skipped": 3,
+    "skipped": 560,
     "failed_tests": [],
     "skip_reasons": {
-      "curl lacks ftp server support": 1,
-      "curl lacks ftp support": 1,
-      "curl lacks TrackMemory support": 1
+      "curl lacks ftp server support": 252,
+      "curl lacks Debug support": 95,
+      "no stunnel": 48,
+      "curl lacks sftp server support": 38,
+      "curl lacks ftp support": 18,
+      "curl lacks IDN support": 15,
+      "configured as DISABLED": 14,
+      "curl lacks scp server support": 12,
+      "curl lacks ftps server support": 9,
+      "failed starting HTTP/2 server": 7,
+      "curl lacks ftp-ipv6 server support": 6,
+      "curl lacks Schannel support": 6,
+      "curl lacks GSS-API support": 5,
+      "no gnutls-serv (with SRP support)": 4,
+      "curl lacks brotli support": 3,
+      "curl lacks http/3 support": 3,
+      "curl lacks override-dns support": 3,
+      "curl lacks sftp support": 3,
+      "curl lacks TrackMemory support": 3,
+      "curl lacks ECH support": 2,
+      "curl lacks libssh2 support": 2,
+      "curl lacks PSL support": 2,
+      "curl lacks zstd support": 2,
+      "Resolving IPv6 'ip6-localhost' didn't work": 2,
+      "curl has IPv6 support": 1,
+      "curl has proxy support": 1,
+      "curl has threaded-resolver support": 1,
+      "curl lacks Unicode support": 1,
+      "failed starting SMB server": 1,
+      "test_rlimit problem: ": 1
     }
   },
   "built": {
@@ -69,5 +96,13 @@
       "TLS-SRP",
       "UnixSockets"
     ]
+  },
+  "coverage": {
+    "lines_covered": 33403,
+    "lines_total": 52142,
+    "lines_percent": 64.1,
+    "functions_covered": 1971,
+    "functions_total": 2564,
+    "functions_percent": 76.9
   }
 }
