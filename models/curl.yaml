@@ -1,0 +1,354 @@
+# Configuration space model of curl (deliverable D4)
+# Format: see schema.md. Verification log: see curl_verification.md.
+#
+# Scope: 22 compile-time options (11 protocols, 9 features, 2 libraries).
+# Every entry points to the line(s) in curl's configure.ac where it is implemented.
+
+system: curl
+version: curl-8_17_0
+sources:
+  - configure.ac
+  - tests/servers.pm
+
+options:
+
+  # ---------------------------------------------------------------- protocols
+
+  - id: http
+    kind: compile-time
+    category: protocol
+    description: HTTP support (and, with TLS, HTTPS).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-http, disabled: --disable-http}
+    evidence: configure.ac:680-709
+    notes: >
+      Disabling HTTP also silently turns off alt-svc and HSTS (C4, C5) and removes
+      RTSP, IPFS and WebSockets (E2).
+
+  - id: ftp
+    kind: compile-time
+    category: protocol
+    description: FTP support (and, with TLS, FTPS).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-ftp, disabled: --disable-ftp}
+    evidence: configure.ac:710-725
+
+  - id: smtp
+    kind: compile-time
+    category: protocol
+    description: SMTP support (and, with TLS, SMTPS).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-smtp, disabled: --disable-smtp}
+    evidence: configure.ac:973-988
+
+  - id: imap
+    kind: compile-time
+    category: protocol
+    description: IMAP support (and, with TLS, IMAPS).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-imap, disabled: --disable-imap}
+    evidence: configure.ac:939-954
+
+  - id: pop3
+    kind: compile-time
+    category: protocol
+    description: POP3 support (and, with TLS, POP3S).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-pop3, disabled: --disable-pop3}
+    evidence: configure.ac:922-937
+
+  - id: telnet
+    kind: compile-time
+    category: protocol
+    description: TELNET support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-telnet, disabled: --disable-telnet}
+    evidence: configure.ac:883-898
+
+  - id: tftp
+    kind: compile-time
+    category: protocol
+    description: TFTP support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-tftp, disabled: --disable-tftp}
+    evidence: configure.ac:905-920
+
+  - id: dict
+    kind: compile-time
+    category: protocol
+    description: DICT support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-dict, disabled: --disable-dict}
+    evidence: configure.ac:866-881
+
+  - id: mqtt
+    kind: compile-time
+    category: protocol
+    description: MQTT support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-mqtt, disabled: --disable-mqtt}
+    evidence: configure.ac:1007-1022
+    notes: >
+      Misleading message: when the option is not given, configure prints
+      "checking whether to support mqtt... no" (line 1021), but it does not disable
+      MQTT, and the resulting curl lists mqtt in its protocols. A model built from
+      configure's output alone would get this default wrong.
+
+  - id: ldap
+    kind: compile-time
+    category: protocol
+    description: LDAP support.
+    values: [enabled, disabled]
+    default: auto
+    auto_rule: Enabled if LDAP libraries are found on the machine, otherwise disabled.
+    flags: {enabled: --enable-ldap, disabled: --disable-ldap}
+    evidence: configure.ac:768-787, 2521-2547
+    notes: >
+      If LDAP libraries are missing and the option is left at its default, configure
+      silently disables LDAP and LDAPS. If --enable-ldap is given explicitly, configure
+      stops with "couldn't detect the LDAP libraries". Verified on Linux (no LDAP
+      libraries): exit 1 with that message. On macOS (LDAP libraries present) the
+      default build includes LDAP.
+
+  - id: ldaps
+    kind: compile-time
+    category: protocol
+    description: LDAPS (LDAP over TLS) support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-ldaps, disabled: --disable-ldaps}
+    evidence: configure.ac:788-819
+    notes: Only takes effect when ldap is enabled (C1).
+
+  # ----------------------------------------------------------------- features
+
+  - id: proxy
+    kind: compile-time
+    category: feature
+    description: Support for connecting through proxies.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-proxy, disabled: --disable-proxy}
+    evidence: configure.ac:848-864
+
+  - id: cookies
+    kind: compile-time
+    category: feature
+    description: HTTP cookie support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-cookies, disabled: --disable-cookies}
+    evidence: configure.ac:4666-4680
+
+  - id: http-auth
+    kind: compile-time
+    category: feature
+    description: HTTP authentication support.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-http-auth, disabled: --disable-http-auth}
+    evidence: configure.ac:4704-4718
+
+  - id: mime
+    kind: compile-time
+    category: feature
+    description: MIME API (multipart data, e.g. file uploads and e-mail attachments).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-mime, disabled: --disable-mime}
+    evidence: configure.ac:4742-4756
+
+  - id: form-api
+    kind: compile-time
+    category: feature
+    description: The older form API (curl_formadd), built on top of the MIME API.
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-form-api, disabled: --disable-form-api}
+    evidence: configure.ac:4780-4803
+    notes: Requires mime (C6).
+
+  - id: alt-svc
+    kind: compile-time
+    category: feature
+    description: Alt-Svc support (servers advertising alternative services).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-alt-svc, disabled: --disable-alt-svc}
+    evidence: configure.ac:4922-4938
+    notes: Requires http (C5).
+
+  - id: hsts
+    kind: compile-time
+    category: feature
+    description: HSTS support (remembering hosts that must only be reached over HTTPS).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-hsts, disabled: --disable-hsts}
+    evidence: configure.ac:4960-4988
+    notes: Requires TLS (C3) and http (C4).
+
+  - id: ipv6
+    kind: compile-time
+    category: feature
+    description: IPv6 support.
+    values: [enabled, disabled]
+    default: auto
+    auto_rule: Enabled if a test program using IPv6 sockets compiles on the machine.
+    flags: {enabled: --enable-ipv6, disabled: --disable-ipv6}
+    evidence: configure.ac:1653-1695
+
+  - id: verbose
+    kind: compile-time
+    category: feature
+    description: Human-readable verbose and error strings (disabling makes the library smaller).
+    values: [enabled, disabled]
+    default: enabled
+    flags: {enabled: --enable-verbose, disabled: --disable-verbose}
+    evidence: configure.ac:4400-4415
+
+  # ---------------------------------------------------------------- libraries
+
+  - id: tls
+    kind: compile-time
+    category: library
+    description: TLS library used for encrypted connections, or none.
+    values: [openssl, none]
+    default: null
+    required: true
+    flags: {openssl: --with-openssl, none: --without-ssl}
+    evidence: configure.ac:223-241, 431-433
+    notes: >
+      curl supports other TLS libraries (GnuTLS, mbedTLS, wolfSSL, ...); they are out of
+      scope for now. Combining --without-ssl with --with-openssl stops configure with an
+      error (configure.ac:2027); this cannot happen in this model because tls is a single
+      option. On macOS, use Homebrew's openssl@3
+      (--with-openssl=$(brew --prefix openssl@3)): curl 8.17.0 does not compile against
+      OpenSSL 4.x (observed).
+
+  - id: zlib
+    kind: compile-time
+    category: library
+    description: zlib compression support (e.g. for --compressed).
+    values: [enabled, disabled]
+    default: auto
+    auto_rule: Enabled if zlib is found on the machine.
+    flags: {enabled: --with-zlib, disabled: --without-zlib}
+    evidence: configure.ac:1349-1393
+
+constraints:
+
+  - id: C1
+    kind: requires
+    if: {ldaps: enabled}
+    then: {ldap: enabled}
+    on_violation: silent
+    result: ldaps is turned off; configure continues.
+    message: "LDAP needs to be enabled to support LDAPS"
+    evidence: configure.ac:799-802, 810-813
+    verified: >
+      macOS: ./configure --with-openssl=... --without-libpsl --disable-ldap --enable-ldaps
+      -> exit 0, message printed, summary "LDAPS: no".
+
+  - id: C2
+    kind: required
+    option: tls
+    on_violation: error
+    message: "select TLS backend(s) or disable TLS with --without-ssl."
+    evidence: configure.ac:431-433
+    verified: "Linux: ./configure --without-libpsl -> exit 1 with this message."
+
+  - id: C3
+    kind: requires
+    if: {hsts: enabled}
+    then: {tls: openssl}
+    on_violation: silent
+    result: hsts is turned off; configure continues.
+    message: "disables HSTS due to lack of SSL"
+    evidence: configure.ac:4960-4988
+    verified: >
+      Linux: ./configure --without-libpsl --without-ssl --enable-hsts
+      -> exit 0, notice printed, summary "HSTS: no".
+
+  - id: C4
+    kind: requires
+    if: {hsts: enabled}
+    then: {http: enabled}
+    on_violation: silent
+    result: hsts is turned off; configure continues.
+    message: null
+    evidence: configure.ac:695-697
+    verified: >
+      Linux: ./configure --without-libpsl --with-openssl --disable-http --enable-hsts
+      -> exit 0, summary "HSTS: no". configure even prints
+      "checking whether to support HSTS... yes".
+
+  - id: C5
+    kind: requires
+    if: {alt-svc: enabled}
+    then: {http: enabled}
+    on_violation: silent
+    result: alt-svc is turned off; configure continues.
+    message: null
+    evidence: configure.ac:695-696
+    verified: >
+      Linux: ./configure --without-libpsl --with-openssl --disable-http --enable-alt-svc
+      -> exit 0, summary "Alt-svc: no". configure even prints
+      "checking whether to support alt-svc... yes".
+
+  - id: C6
+    kind: requires
+    if: {form-api: enabled}
+    then: {mime: enabled}
+    on_violation: error
+    message: "MIME support needs to be enabled in order to enable form API support"
+    evidence: configure.ac:4791-4792, 4796-4799
+    verified: >
+      Linux: ./configure --without-libpsl --with-openssl --disable-mime --enable-form-api
+      -> exit 1 with this message.
+    notes: >
+      The error only happens when form-api is requested explicitly. With --disable-mime
+      alone, configure silently turns form-api off (verified: exit 0,
+      "checking whether to support the form API... no").
+
+effects:
+
+  - id: E1
+    when: {tls: none}
+    result: >
+      The TLS variants of protocols are not built (https, ftps, gophers, imaps, pop3s,
+      smtps, smbs, wss). SMB is also not built.
+    evidence: configure.ac:5384-5452
+    verified: >
+      Linux: ./configure --without-libpsl --without-ssl -> protocols:
+      dict file ftp gopher http imap ipfs ipns mqtt pop3 rtsp smtp telnet tftp ws.
+
+  - id: E2
+    when: {http: disabled}
+    result: RTSP, IPFS/IPNS and WebSockets (ws, wss) are not built.
+    message: "disable HTTP disables FTP over proxy, IPFS and RTSP"
+    evidence: configure.ac:686-694, 5063-5095
+    verified: >
+      Linux: ./configure --without-libpsl --with-openssl --disable-http -> protocols:
+      dict file ftp ftps gopher gophers imap imaps mqtt pop3 pop3s smb smbs smtp smtps
+      telnet tftp.
+
+  - id: E3
+    when: {ftp: disabled}
+    result: >
+      ftp and ftps are not built, and the test runner skips every test that needs an
+      FTP server ("curl lacks ftp server support"). The same mechanism applies to every
+      protocol.
+    evidence: configure.ac:5391-5396, tests/servers.pm:322-330
+    verified: >
+      macOS: ./configure ... --disable-ftp; make; runtests.pl 100
+      -> "test 0100 SKIPPED: curl lacks ftp server support".

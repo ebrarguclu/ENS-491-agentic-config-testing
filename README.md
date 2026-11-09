@@ -85,7 +85,7 @@ and a build check of curl are in [docs/candidates.md](docs/candidates.md).
 | D1 | Repository setup | This repository + README | Fethiye Ebrar Güçlü, Safiye Nur Narman | ✅ Done |
 | D2 | Candidate systems | [docs/candidates.md](docs/candidates.md) | All | ✅ Done |
 | D3 | System selection | [docs/selection.md](docs/selection.md) | Safiye Nur Narman | ✅ Done (curl) |
-| D4 | Configuration space model | `models/schema.md`, `models/curl.yaml` | Rana Keleş | ⏳ Next |
+| D4 | Configuration space model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Rana Keleş | 📝 Draft, under review |
 | D5 | Build & test automation scripts | `scripts/run_config.sh` + usage | Fethiye Ebrar Güçlü | ⏳ Next |
 | D6 | Coverage statistics | `results/coverage_table.md` | Safiye Nur Narman | Planned |
 | D7 | LLM test generation | `tests/generated/` + before/after coverage | All (one LLM tool each) | Planned |
@@ -96,5 +96,8 @@ and a build check of curl are in [docs/candidates.md](docs/candidates.md).
 🚧 **Stage 1 in progress.** Candidate systems were evaluated and **curl** was
 selected as the subject system. It builds from source in about 80 seconds,
 and its test suite runs on our setup ([build check](docs/candidates.md#build-check-curl)).
-Next steps: define the configuration space model format and extract the
-curl model (D4), and write the build-and-test automation script (D5).
+A first configuration space model of curl (22 compile-time options, 6
+constraints) is drafted and every constraint was confirmed by running the
+build system ([verification](models/curl_verification.md)). Next steps:
+review the model as a team (D4) and write the build-and-test automation
+script that reads it (D5).

@@ -233,6 +233,9 @@ Features:  alt-svc AsynchDNS brotli HSTS HTTPS-proxy IPv6 Largefile libz NTLM SS
 - `configure` refuses to run until a TLS library is chosen. Use `--with-openssl`, or
   `--without-ssl` for a build without TLS.
 - If `libpsl` is not installed, add `--without-libpsl`.
+- On macOS, use Homebrew's `openssl@3`, not the default `openssl` (now 4.x, which curl
+  8.17.0 does not compile against):
+  `./configure --with-openssl=$(brew --prefix openssl@3) --without-libpsl`
 - On Windows, use WSL.
 - Each test takes about one second. While developing, run a range of tests (e.g.
   `1 to 100`) instead of the full suite.
