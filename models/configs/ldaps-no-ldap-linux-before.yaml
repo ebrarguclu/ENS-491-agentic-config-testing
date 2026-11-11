@@ -1,0 +1,6 @@
+name: ldaps-no-ldap-linux-before
+system: curl
+values:
+  tls: openssl
+  ldap: disabled
+  ldaps: enabled
