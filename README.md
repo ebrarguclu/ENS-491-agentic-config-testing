@@ -104,8 +104,8 @@ in detail at source-code level. The full comparison of all seven systems is in
 | D4 | Configuration model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Safiye Nur Narman | Draft, in review |
 | D5 | Scripts that build curl and run its tests for a given configuration | [scripts/run_config.sh](scripts/run_config.sh) | Rana Keleş | Done |
 | D6 | Coverage numbers for different configurations | [results/coverage_table.md](results/coverage_table.md) | Rana Keleş | Done |
-| D7 | Tests written by AI, with before/after coverage | `tests/generated/` | Fethiye Ebrar Güçlü | Planned |
-| D8 | Live demo for the advisor | | Fethiye Ebrar Güçlü | Planned |
+| D7 | Tests written by AI, with before/after coverage | `tests/generated/`, `tests/existing/stage2-analysis.md` | Fethiye Ebrar Güçlü | Done |
+| D8 | Live demo for the advisor | `docs/d8-demo-script.md` | Fethiye Ebrar Güçlü | Script ready |
 
 ## Where we are now
 
