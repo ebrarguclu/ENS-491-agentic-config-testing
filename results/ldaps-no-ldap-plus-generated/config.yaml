@@ -1,0 +1,6 @@
+name: ldaps-no-ldap-plus-generated
+system: curl
+values:
+  tls: openssl
+  ldap: disabled
+  ldaps: enabled
