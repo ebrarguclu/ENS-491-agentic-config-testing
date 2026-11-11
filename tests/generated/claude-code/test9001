@@ -1,0 +1,33 @@
+<testcase>
+<info>
+<keywords>
+LDAP
+LDAPS
+</keywords>
+</info>
+
+#
+# Client-side
+<client>
+<features>
+!ldap
+</features>
+<name>
+LDAPS is silently unsupported when LDAP is not built in (C1)
+</name>
+<command>
+ldaps://test.example.com/
+</command>
+</client>
+
+#
+# Verify data after the test has been "shot"
+<verify>
+<errorcode>
+1
+</errorcode>
+<stderr mode="text">
+curl: (1) Protocol "ldaps" not supported
+</stderr>
+</verify>
+</testcase>
