@@ -1,0 +1,5 @@
+name: no-http-linux-before
+system: curl
+values:
+  tls: openssl
+  http: disabled

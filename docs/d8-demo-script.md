@@ -106,18 +106,33 @@ printing `SKIPPED: curl has ldap support` on such a build.
 
 ## 5. Coverage before vs. after (2-3 min)
 
-Open `tests/generated/claude-code/before-after.md` (numbers filled in after the
-comparison run) and walk through the table: existing-tests-only coverage for each
-of the three affected configurations (`ldaps-no-ldap`, `no-tls`, `no-http`) versus
-the same configuration with our 4 generated tests added.
+Open [tests/generated/claude-code/before-after.md](../tests/generated/claude-code/before-after.md)
+and walk through the table: same-machine, same-platform "before" (existing tests
+only) vs. "after" (existing tests + our 4 generated tests), for all three affected
+configurations.
 
-Say what the table shows: the new tests add [N] newly-passing assertions that
-specifically exercise the silent-drop behavior, and [describe coverage delta, if
-any — a handful of new lines in `tool_getparam.c`/`url.c` get exercised that
-weren't hit by the existing suite]. The headline point is not a big percentage
-jump — these are 4 narrow, targeted tests — it's that curl's coverage number can
-look identical before and after while something curl's own suite never checked is
-now actually checked.
+Real numbers:
+
+| Configuration | Passed (before → after) | Line coverage (before → after) |
+|---|---|---|
+| ldaps-no-ldap | 1583 → 1584 | 70.0% (33,322 → 33,326 lines) |
+| no-tls | 1444 → 1446 | 71.5% → 71.6% (30,409 → 30,430 lines) |
+| no-http | 630 → 633 | 58.7% → 58.8% (22,588 → 22,598 lines) |
+
+Say what this shows: the percentage barely moves — these are 4 narrow, targeted
+tests, not a general coverage push — but line coverage does go up a little in
+every config (+4, +21, +10 lines), from error-handling code curl's own suite
+reaches partially but never through this exact silent-constraint path. The
+headline number is not the percentage: it's that constraints with at least one
+test that actually *asserts* the documented silent behavior go from **0 out of 6**
+to **4 out of 6** (C1, C3, C4, C5).
+
+A side finding worth mentioning live: test9001 (C1, the LDAPS test) actually runs
+and passes on *all three* configurations here, not just `ldaps-no-ldap` — because
+this particular machine has no LDAP libraries installed at all, so curl silently
+drops LDAP(S) regardless of which of these three configs you build. That's a good
+illustration that a "silent" constraint's effect can depend on the build machine,
+not only on the requested configuration.
 
 ## 6. Wrap-up and open questions (1 min)
 
