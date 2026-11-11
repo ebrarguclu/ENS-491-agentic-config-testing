@@ -6,9 +6,9 @@ This compares, for each affected configuration, the existing test suite alone
 
 ## Why these numbers were collected on Linux, not reused from `results/coverage_table.md`
 
-Rana's D6 numbers in [results/coverage_table.md](../../../results/coverage_table.md)
+Rana's D6 numbers in [results/coverage_table.md](../../results/coverage_table.md)
 were collected on Darwin arm64. We already found (while writing
-[tests/existing/stage2-analysis.md](../../existing/stage2-analysis.md)) that the same
+[tests/existing/stage2-analysis.md](../existing/stage2-analysis.md)) that the same
 configuration gets noticeably different pass/skip counts on Linux vs. macOS — mostly
 because some auxiliary test servers (stunnel, scp, SMB, IPv6 variants) are set up
 differently on each machine, which has nothing to do with our generated tests. Mixing
@@ -79,7 +79,7 @@ bash scripts/run_config.sh models/configs/no-tls-linux-before.yaml
 bash scripts/run_config.sh models/configs/no-http-linux-before.yaml
 
 # "after" (3 runs, generated tests added)
-cp tests/generated/claude-code/test900{1,2,3,4} systems/curl/tests/data/
+cp tests/generated/test900{1,2,3,4} systems/curl/tests/data/
 bash scripts/run_config.sh models/configs/ldaps-no-ldap-plus-generated.yaml
 bash scripts/run_config.sh models/configs/no-tls-plus-generated.yaml
 bash scripts/run_config.sh models/configs/no-http-plus-generated.yaml

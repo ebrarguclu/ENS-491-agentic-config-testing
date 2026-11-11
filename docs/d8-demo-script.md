@@ -1,32 +1,28 @@
-# D8: live demo script
+# D8: Live demonstration
 
-Purpose: a runnable, step-by-step script for showing the whole pipeline to our
-advisor live — model → build → silent behavior → missing test coverage → our new
-test catching it → coverage before/after. Every command below is one we have
-actually run; the exact outputs shown are what we got, not what we expect.
+A runnable, step-by-step walkthrough of the full pipeline: model → build → silent
+behavior → missing test coverage → our new test catching it → coverage before/after.
+Every command below has actually been run; the outputs shown are what was
+produced, not what is expected.
 
-Total time: about 10-12 minutes if run live (`./configure` + `make` takes about a
-minute each time; two of the three builds can be pre-built right before the meeting
-so the demo only waits once).
-
-## 0. Setup (do this a few minutes before the meeting)
+## 0. Setup
 
 ```sh
 cd systems/curl
 git log -1 --oneline        # confirm we're on curl-8_17_0
 ```
 
-Pre-build the `ldaps-no-ldap` configuration so step 2 doesn't need to wait on a
-build live:
+The `ldaps-no-ldap` configuration can be pre-built in advance so step 2 does not
+need to wait on a build during the meeting:
 
 ```sh
 ./configure --without-libpsl --with-openssl --disable-ldap --enable-ldaps
 make -j2 && make -C tests
 ```
 
-## 1. The model (1 min)
+## 1. The model
 
-Open `models/curl.yaml` and point at the `ldaps` option and constraint `C1`:
+`models/curl.yaml` defines the `ldaps` option and constraint `C1`:
 
 ```yaml
 - id: C1
@@ -38,17 +34,17 @@ Open `models/curl.yaml` and point at the `ldaps` option and constraint `C1`:
   evidence: configure.ac:788-817
 ```
 
-Say: "curl's own `configure` lets you ask for LDAPS without LDAP. It doesn't error —
-it just quietly builds a curl that doesn't have LDAPS, and only says so if you
-specifically look for it."
+curl's own `configure` script allows requesting LDAPS without LDAP. It does not
+error — it silently builds a curl without LDAPS support, and the only trace of
+this is a line in the configure output that is easy to miss.
 
-## 2. Show the silent behavior live (2 min)
+## 2. The silent behavior, demonstrated live
 
 ```sh
 ./configure --without-libpsl --with-openssl --disable-ldap --enable-ldaps 2>&1 | grep -i ldap
 ```
 
-Expected (real) output:
+Observed output:
 
 ```
 configure: WARNING: Cannot find libraries for LDAP support: LDAP disabled
@@ -56,62 +52,60 @@ configure: WARNING: Cannot find libraries for LDAP support: LDAP disabled
   LDAPS:            no      (--enable-ldaps)
 ```
 
-Exit code is 0 — the build succeeds. Then show the built binary:
+Exit code is 0 — the build succeeds. The built binary:
 
 ```sh
 ./src/curl ldaps://example.com/; echo "exit=$?"
 ```
 
-Real output:
+Observed output:
 
 ```
 curl: (1) Protocol "ldaps" not supported
 exit=1
 ```
 
-Say: "We asked for LDAPS, configure said nothing was wrong, the build succeeded —
-and the resulting curl can't do LDAPS at all. Nothing in the normal build output
-told us that in a way you'd actually notice unless you grepped for it."
+LDAPS was explicitly requested; `configure` reported no problem and the build
+succeeded, yet the resulting binary cannot use LDAPS at all. Nothing in the normal
+build output surfaces this unless it is specifically searched for.
 
-## 3. The gap in curl's own test suite (2 min)
+## 3. The gap in curl's own test suite
 
 ```sh
 grep -lE "^ldap$|^ldaps$" tests/data/test[0-9]* 2>/dev/null
 ```
 
-Only 2 of curl's ~1,890 tests touch LDAP at all (`test445`, `test1560`), and open
-one of them to show it requires `<features>ldap</features>` — it only runs when
-LDAP *is* present, so it can never see the silent-drop case we just demonstrated.
+Only 2 of curl's ~1,890 tests touch LDAP at all (`test445`, `test1560`), and each
+requires `<features>ldap</features>` — they run only when LDAP *is* present, so
+neither can observe the silent-drop case demonstrated above. None of curl's own
+tests check this: they confirm LDAP works when present, never what happens to
+LDAPS specifically when LDAP is absent.
 
-Say: "None of curl's own tests check this. They check that LDAP works when it's
-there, never what happens to LDAPS specifically when LDAP isn't."
+## 4. The generated test catching it
 
-## 4. Our generated test catching it (2 min)
-
-Open `tests/generated/claude-code/test9001` and show it is the mirror image of what
-we just did by hand: `<features>!ldap</features>`, command `ldaps://...`, expects
-errorcode 1 and the exact message above.
+`tests/generated/test9001` mirrors the manual steps above:
+`<features>!ldap</features>`, command `ldaps://...`, expecting errorcode 1 and the
+exact message observed.
 
 ```sh
-cp ../../tests/generated/claude-code/test9001 tests/data/test9001
+cp ../../tests/generated/test9001 tests/data/test9001
 cd tests && perl runtests.pl -a -n 9001
 ```
 
-Real output: `OK (1 out of 1 ...)`.
+Observed output: `OK (1 out of 1 ...)`.
 
-To show it isn't a trivial always-pass test, also run it against a build that
-*does* have LDAP (if pre-built) or point at the write-up in
-`tests/generated/claude-code/README.md`, which shows the same test correctly
-printing `SKIPPED: curl has ldap support` on such a build.
+To confirm this is not a trivially-always-passing test, the same test can be run
+against a build that does have LDAP (if pre-built), or the result can be cited
+directly from [tests/generated/README.md](../tests/generated/README.md), which
+shows the same test correctly printing `SKIPPED: curl has ldap support` on such a
+build.
 
-## 5. Coverage before vs. after (2-3 min)
+## 5. Coverage before vs. after
 
-Open [tests/generated/claude-code/before-after.md](../tests/generated/claude-code/before-after.md)
-and walk through the table: same-machine, same-platform "before" (existing tests
-only) vs. "after" (existing tests + our 4 generated tests), for all three affected
+[tests/generated/before-after.md](../tests/generated/before-after.md) compares,
+on the same machine and platform, the existing test suite alone ("before") against
+the existing suite plus the 4 generated tests ("after"), for all three affected
 configurations.
-
-Real numbers:
 
 | Configuration | Passed (before → after) | Line coverage (before → after) |
 |---|---|---|
@@ -119,34 +113,33 @@ Real numbers:
 | no-tls | 1444 → 1446 | 71.5% → 71.6% (30,409 → 30,430 lines) |
 | no-http | 630 → 633 | 58.7% → 58.8% (22,588 → 22,598 lines) |
 
-Say what this shows: the percentage barely moves — these are 4 narrow, targeted
-tests, not a general coverage push — but line coverage does go up a little in
-every config (+4, +21, +10 lines), from error-handling code curl's own suite
-reaches partially but never through this exact silent-constraint path. The
-headline number is not the percentage: it's that constraints with at least one
-test that actually *asserts* the documented silent behavior go from **0 out of 6**
+The percentage barely moves, since these are 4 narrow, targeted tests rather than
+a general coverage push, but line coverage increases in every configuration (+4,
++21, +10 lines) from error-handling code that curl's own suite reaches only
+partially, never through this exact silent-constraint path. The result that
+matters is not the percentage: the number of modeled constraints with at least one
+test that actually asserts the documented silent behavior goes from **0 out of 6**
 to **4 out of 6** (C1, C3, C4, C5).
 
-A side finding worth mentioning live: test9001 (C1, the LDAPS test) actually runs
-and passes on *all three* configurations here, not just `ldaps-no-ldap` — because
-this particular machine has no LDAP libraries installed at all, so curl silently
-drops LDAP(S) regardless of which of these three configs you build. That's a good
-illustration that a "silent" constraint's effect can depend on the build machine,
-not only on the requested configuration.
+A related finding: test9001 (C1, the LDAPS test) runs and passes on all three
+configurations here, not only `ldaps-no-ldap`, because this particular machine has
+no LDAP libraries installed at all, so curl silently drops LDAP(S) regardless of
+which of the three configurations is built. This illustrates that a silent
+constraint's effect can depend on the build machine, not only on the requested
+configuration.
 
-## 6. Wrap-up and open questions (1 min)
+## 6. Summary and open questions
 
-- We have 4 constraints with real, tool-verified, always-silent behavior (C1, C3,
-  C4, C5) and 2 that are configure-time errors (C2, C6) — the 4 silent ones are
-  where generated tests add the most value, since errors are already hard to miss.
-- Next: more generated tests for the option combinations we haven't modeled yet,
-  and comparing how a different AI tool's generated tests differ from ours (the
-  `tests/generated/<tool>/` layout is designed for exactly that comparison).
+Four constraints have confirmed, always-silent behavior (C1, C3, C4, C5); two are
+configure-time errors (C2, C6). The four silent ones are where generated tests add
+the most value, since errors are already hard to miss. Possible next steps include
+generated tests for option combinations not yet modeled, and comparing how a
+different AI tool's generated tests would differ from these.
 
 Questions for the advisor:
-- Is 4 targeted tests (one per silent constraint) the right granularity for D7, or
-  should we also generate tests for non-silent (error) constraints like C2/C6, even
-  though those are easy to notice without a test?
+- Is targeting the 4 silent constraints the right scope for D7, or should error
+  constraints (C2, C6) also get generated tests, even though those are already
+  easy to notice without one?
 - For "before/after coverage," is a line/function coverage delta the right metric,
-  or should we also report something like "number of modeled constraints with at
-  least one asserting test" (which goes from 0/6 to 4/6)?
+  or should the report also state "number of modeled constraints with at least one
+  asserting test" (0/6 → 4/6)?
