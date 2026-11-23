@@ -114,7 +114,7 @@ in detail at source-code level. The full comparison of all seven systems is in
 | D10 | Run every configuration, measure line, function and branch coverage, and the combined coverage of all runs | results of the runs | Rana Keleş | Planned |
 | D11 | A step-by-step loop where an AI writes tests for code that is still not covered | generated tests and a log of every round | Fethiye Ebrar Güçlü, Safiye Nur Narman | Planned |
 | D12 | Evaluation: what the AI-written tests added, round by round | evaluation report | Rana Keleş | Planned |
-| D13 | Final report and presentation | report and slides | All (led by Fethiye Ebrar Güçlü) | Planned |
+| D13 | Final report and presentation | report and slides | All | Planned |
 
 ## Where we are now
 
