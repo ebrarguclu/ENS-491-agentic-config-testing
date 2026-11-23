@@ -259,10 +259,11 @@ one script:
 bash scripts/verify_curl_constraints.sh
 ```
 
-It runs 13 checks: the 6 rules, the silent version of one of them, the TLS conflict, the
-3 side effects and two checks for the MQTT message. It saves the results in
-`results/verification/` and resets curl to its normal setup at the end. **On Linux all 13
-checks passed** ([summary](../results/verification/summary.md)). Every teammate can run
+It ran 13 checks at the end of D4: the 6 rules, the silent version of one of them, the
+TLS conflict, the 3 side effects and two checks for the MQTT message. It saves the
+results in `results/verification/` and resets curl to its normal setup at the end. **On
+Linux all 13 checks passed.** (A 14th check, for the LDAP libraries, was added later,
+together with D9. See the [current summary](../results/verification/summary.md).) Every teammate can run
 it on their own machine.
 
 ### What we found
@@ -270,8 +271,9 @@ it on their own machine.
 The full table is in [curl_verification.md](../models/curl_verification.md). The main
 points:
 
-1. Silent rules are common. For 5 of the 6 rules, the build can succeed without
-   containing what was asked for.
+1. Silent rules are common. C1, C3, C4 and C5 are always silent, and C6 is silent when
+   the form API is left at its default. Only C2 always stops the build. In the silent
+   cases, the build succeeds without containing what was asked for.
 2. `configure` sometimes says the opposite of what it does. With
    `--disable-http --enable-hsts` it prints *"HSTS... yes"* and then leaves HSTS out. And
    by default it prints *"mqtt... no"*, although MQTT is built.

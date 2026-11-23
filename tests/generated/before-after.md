@@ -60,14 +60,20 @@ Both used `scripts/run_config.sh` unchanged, so the only real difference between
   `src/tool_getparam.c`, and the "protocol not supported" path for `ldaps` in the
   library's URL handling) that other tests already reach through some branches but
   not the exact branch our silent-constraint scenario takes.
+- **The smallest gain may be measurement noise.** [scripts/README.md](../../scripts/README.md)
+  notes that coverage counts can differ by a few lines between two runs of the same
+  configuration. The +21 and +10 line gains are larger than that, but the +4 for
+  `ldaps-no-ldap` may not be. The noise check planned in D10 (running the same
+  configuration twice) will show how large this run-to-run difference really is.
 - **The percentage point gain is small on purpose.** These are 4 narrow,
   specifically-targeted tests, not a general attempt to raise coverage. The
   headline result for D7 is not the percentage — it is that the number of modeled
   constraints with at least one test that actually *asserts* the documented
   behavior goes from **0 out of 6** (per `tests/existing/stage2-analysis.md`) to
-  **4 out of 6** (C1, C3, C4, C5 — the two left over, C2 and C6, are
-  `configure`-time errors rather than runtime behavior, see
-  [README.md](README.md#not-covered-here-c2-and-c6)).
+  **4 out of 6** (C1, C3, C4, C5, the four that are always silent). Of the two left
+  over, C2 is always a `configure`-time error, and C6 is an error only when `form-api`
+  is requested explicitly; its silent default case has no test yet, see
+  [README.md](README.md#not-covered-here-c2-and-c6).
 
 ## How to reproduce
 

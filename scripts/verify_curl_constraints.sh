@@ -2,9 +2,10 @@
 #
 # verify_curl_constraints.sh
 #
-# Re-checks every constraint and effect in models/curl.yaml by running curl's
-# `configure` with option combinations that break each rule, then comparing the
-# exit code and output with what the model says should happen.
+# Re-checks every constraint, effect and environment requirement in
+# models/curl.yaml by running curl's `configure` with option combinations that
+# break each rule, then comparing the exit code and output with what the model
+# says should happen.
 #
 # Usage (from the repository root):
 #   1. Clone and prepare curl once (see systems/README.md):
@@ -56,6 +57,7 @@ SUMMARY="$LOG_DIR/summary.md"
 
 PASS=0
 FAIL=0
+SKIP=0
 
 # check ID EXPECTED_EXIT PATTERN DESCRIPTION -- configure options...
 #   PATTERN: extended regex that must appear in the configure output
@@ -91,11 +93,38 @@ check_protocol() {
   report "$id" "$*" "$desc" "$got_exit" "$result"
 }
 
+# check_requirement ID PATTERN HAVE_PATTERN DESCRIPTION -- configure options...
+#   For environment requirements (models/curl.yaml, "environment:"). Expects
+#   configure to stop (exit 1) with PATTERN, because this machine lacks what the
+#   requirement needs. If the machine does have it, configure succeeds and its
+#   output matches HAVE_PATTERN instead. Then there is nothing to test here, so the
+#   check is reported as SKIP, not as a failure.
+check_requirement() {
+  local id="$1" pattern="$2" have="$3" desc="$4"
+  shift 5
+  local log="$LOG_DIR/$id.log"
+  (cd "$CURL_DIR" && ./configure $BASE "$@" > "$log" 2>&1)
+  local got_exit=$?
+  local result
+  if [ "$got_exit" -eq 1 ] && grep -Eq "$pattern" "$log"; then
+    result="PASS"
+  elif [ "$got_exit" -eq 0 ] && grep -Eq "$have" "$log"; then
+    result="SKIP (this machine meets the requirement)"
+  else
+    result="FAIL"
+  fi
+  report "$id" "$*" "$desc" "$got_exit" "$result"
+}
+
 report() {
   local id="$1" args="${2:-(none)}" desc="$3" got_exit="$4" result="$5"
   printf '%-14s %-6s %s\n' "$id" "${result%% *}" "$desc"
   echo "| $id | \`${args}\` | $desc | $got_exit | $result |" >> "$SUMMARY"
-  case "$result" in PASS) PASS=$((PASS + 1)) ;; *) FAIL=$((FAIL + 1)) ;; esac
+  case "$result" in
+    PASS) PASS=$((PASS + 1)) ;;
+    SKIP*) SKIP=$((SKIP + 1)) ;;
+    *) FAIL=$((FAIL + 1)) ;;
+  esac
 }
 
 echo "Running configure checks in $CURL_DIR (logs: $LOG_DIR)"
@@ -133,6 +162,15 @@ check TLS-conflict 1 "without-ssl has been set together" \
   "--without-ssl with --with-openssl: stops with an error" -- \
   --without-ssl $TLS
 
+# ---- environment requirements (models/curl.yaml) ---------------------------
+# R1 can only be seen on a machine without LDAP libraries (for example our Linux
+# machine). On a machine that has them (for example macOS) it is reported as SKIP.
+# R2 (zlib) is not checked here, because seeing it means removing zlib's files
+# from the machine. See models/curl_verification.md for how it was checked.
+check_requirement R1 "couldn't detect the LDAP libraries" "^ +LDAP: +enabled" \
+  "ldap requested, no LDAP libraries: stops with an error" -- \
+  $TLS --enable-ldap
+
 # ---- effects --------------------------------------------------------------
 check_protocol E1 https ABSENT "no TLS: https not built" -- \
   --without-ssl
@@ -151,10 +189,10 @@ check_protocol MQTT-built mqtt PRESENT "default build: mqtt is built anyway" -- 
   $TLS
 
 echo
-echo "Passed: $PASS   Failed: $FAIL"
+echo "Passed: $PASS   Failed: $FAIL   Skipped: $SKIP"
 {
   echo
-  echo "**Passed: $PASS, failed: $FAIL**"
+  echo "**Passed: $PASS, failed: $FAIL, skipped: $SKIP**"
 } >> "$SUMMARY"
 echo "Summary written to $SUMMARY"
 

@@ -7,7 +7,7 @@ checking our model. They are written with AI help and reviewed by the team.
 
 | Script | What it does |
 |---|---|
-| [verify_curl_constraints.sh](verify_curl_constraints.sh) | Re-checks every rule and side effect in `models/curl.yaml` by running curl's `configure` with combinations that break them (13 checks). Takes a few minutes and saves the results in `results/verification/` |
+| [verify_curl_constraints.sh](verify_curl_constraints.sh) | Re-checks every rule, side effect and the LDAP library requirement (R1) in `models/curl.yaml` by running curl's `configure` with combinations that break them (14 checks). Takes a few minutes and saves the results in `results/verification/` |
 
 How to run it, from the repository root (curl must be downloaded into `systems/curl`
 first, see [systems/README.md](../systems/README.md)):
@@ -16,7 +16,15 @@ first, see [systems/README.md](../systems/README.md)):
 bash scripts/verify_curl_constraints.sh
 ```
 
-It works on Linux and macOS. On macOS it automatically uses Homebrew's `openssl@3`.
+It works on Linux and macOS. On macOS it automatically uses Homebrew's `openssl@3`. The R1
+check only works on a machine without LDAP libraries. On a machine that has them (like
+our Macs) it is reported as `SKIP`, not as a failure.
+
+To use a curl source tree somewhere else than `systems/curl`, set `CURL_DIR`:
+
+```sh
+CURL_DIR=/path/to/curl bash scripts/verify_curl_constraints.sh
+```
 
 ## run_config.sh (D5)
 
@@ -45,9 +53,11 @@ scripts/run_config.sh models/configs/no-ftp.yaml 1 to 100    # tests 1 to 100
 scripts/run_config.sh models/configs/no-ftp.yaml             # all tests
 ```
 
-A configuration file picks values for some options (see
+A configuration file picks values for options (see
 [models/schema.md](../models/schema.md#configuration-files)). Examples are in
-[models/configs/](../models/configs/).
+[models/configs/](../models/configs/). The files there are partial configurations from D5
+to D7. From D9 on, new configurations must be full: a value for every option, and no
+`auto`.
 
 The script:
 
@@ -91,4 +101,5 @@ tests. On our Mac the full test suite takes about 3 to 8 minutes per configurati
   Apple Clang that flag produces LLVM coverage data, which `lcov` cannot read.
 - Coverage counts can differ by a few lines between two runs of the same configuration.
 
-Tested on macOS (Apple Silicon). Not yet tried on Linux.
+Tested on macOS (Apple Silicon) for D5 and D6, and on Ubuntu 24.04 for the D7 runs
+(see [tests/generated/before-after.md](../tests/generated/before-after.md)).

@@ -8,11 +8,11 @@ Project #516: *Agentic AI for Detecting and Testing Configuration Option Interac
 | Team | Fethiye Ebrar Güçlü, Rana Keleş, Safiye Nur Narman |
 | Advisor | Cemal Yılmaz |
 | System we study | [curl](https://github.com/curl/curl), version `curl-8_17_0` ([why curl?](docs/selection.md)) |
-| Where we are | D1 to D4 finished (D4 is a draft under review), D5 is next |
+| Where we are | D1 to D8 finished. Next: D9 to D13, see the [plan](docs/plan-d9-d13.md) |
 
 New to the project? Start with [Key terms](#key-terms), then read the
-[progress report](docs/progress-d1-d4.md). It explains everything we have done so far
-step by step.
+[progress report](docs/progress-d1-d4.md). It explains D1 to D4 step by step. For D5 to
+D8, see [Where we are now](#where-we-are-now) below.
 
 ## The problem in one example
 
@@ -68,7 +68,11 @@ wrong.
 | Silent constraint | A constraint that the build system "solves" by quietly changing your choice instead of showing an error | LDAPS is dropped without an error |
 | Test suite | The tests that come with the program | curl has about 1,890 tests |
 | Code coverage | How much of the program's code the tests actually run | "62% of lines were executed" |
+| Branch coverage | How many of the program's decision outcomes the tests run. Every `if` has two outcomes, true and false, and both must happen to count as fully covered | an `if` in curl's proxy code that the tests only ever reach with a proxy set is half covered |
 | Interaction coverage | How many option *combinations* the tests actually exercise | "FTP off + cookies on was tested" |
+| Covering array | A small set of configurations chosen so that every pair of option values appears together in at least one of them (2-way or "pairwise"). A standard technique from combinatorial interaction testing (CIT) | for 22 on/off options, about 10 to 15 builds instead of 4.2 million |
+| Full configuration | A configuration that gives an explicit value to every option, so the machine decides nothing | all 22 curl options, with `ldap`, `ipv6` and `zlib` set by hand instead of `auto` |
+| Environment requirement | A value that only works if the build machine has something installed | `ldap: enabled` needs the LDAP libraries |
 | Ground truth | An official, trusted source we can check the AI's answers against | curl's build files and test metadata |
 
 ## Systems we looked at
@@ -101,23 +105,45 @@ in detail at source-code level. The full comparison of all seven systems is in
 | D1 | Repository setup | This repository | Safiye Nur Narman | Done |
 | D2 | List of candidate systems | [docs/candidates.md](docs/candidates.md) | Safiye Nur Narman | Done |
 | D3 | Choice of system | [docs/selection.md](docs/selection.md) | Safiye Nur Narman | Done (curl) |
-| D4 | Configuration model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Safiye Nur Narman | Draft, in review |
+| D4 | Configuration model | [models/schema.md](models/schema.md), [models/curl.yaml](models/curl.yaml) | Safiye Nur Narman | Done |
 | D5 | Scripts that build curl and run its tests for a given configuration | [scripts/run_config.sh](scripts/run_config.sh) | Rana Keleş | Done |
 | D6 | Coverage numbers for different configurations | [results/coverage_table.md](results/coverage_table.md) | Rana Keleş | Done |
-| D7 | Tests written by AI, with before/after coverage | `tests/generated/`, `tests/existing/stage2-analysis.md` | Fethiye Ebrar Güçlü | Done |
-| D8 | Live demo for the advisor | `docs/d8-demo-script.md` | Fethiye Ebrar Güçlü | Script ready |
+| D7 | Tests written by AI, with before/after coverage | [tests/generated/](tests/generated/), [tests/existing/stage2-analysis.md](tests/existing/stage2-analysis.md) | Fethiye Ebrar Güçlü | Done |
+| D8 | Live demo for the advisor | [docs/d8-demo-script.md](docs/d8-demo-script.md) | Fethiye Ebrar Güçlü | Done |
+| D9 | Full configurations and a covering array of them | [models/schema.md](models/schema.md#full-configurations), covering array files | Safiye Nur Narman, Rana Keleş | In progress |
+| D10 | Run every configuration, measure line, function and branch coverage, and the combined coverage of all runs | results of the runs | Rana Keleş | Planned |
+| D11 | A step-by-step loop where an AI writes tests for code that is still not covered | generated tests and a log of every round | Fethiye Ebrar Güçlü, Safiye Nur Narman | Planned |
+| D12 | Evaluation: what the AI-written tests added, round by round | evaluation report | Rana Keleş | Planned |
+| D13 | Final report and presentation | report and slides | All (led by Fethiye Ebrar Güçlü) | Planned |
 
 ## Where we are now
 
-We chose curl, built it on Linux and macOS and ran its tests. We then wrote a first model
-of curl's configuration: 22 build-time options, 6 rules between them and 3 side effects.
-Every rule was confirmed by running curl's build system, and this check can be repeated
-with one command ([scripts/verify_curl_constraints.sh](scripts/verify_curl_constraints.sh)).
+We chose curl, built it on Linux and macOS and ran its tests. We wrote a first model of
+curl's configuration: 22 build-time options, 6 rules between them (constraints), 3 side
+effects and 2 requirements on the build machine. Every rule was confirmed by running
+curl's build system, and this check can be repeated with one command
+([scripts/verify_curl_constraints.sh](scripts/verify_curl_constraints.sh)).
 
-The full story, including the commands we ran, is in the
+After that:
+
+- **D5 and D6.** A script builds curl for one configuration, runs all of curl's tests and
+  measures code coverage. We compared 8 configurations on a Mac
+  ([results/coverage_table.md](results/coverage_table.md)).
+- **Stage 2.** None of curl's own tests check any of our 6 rules
+  ([tests/existing/stage2-analysis.md](tests/existing/stage2-analysis.md)).
+- **D7.** We wrote 4 new tests with AI help, one for each rule that is always silent.
+  The number of rules with a test that checks them went from 0 of 6 to 4 of 6
+  ([tests/generated/](tests/generated/)).
+- **D8.** A live demo of the whole pipeline ([docs/d8-demo-script.md](docs/d8-demo-script.md)).
+
+The full story of D1 to D4, including the commands we ran, is in the
 [progress report](docs/progress-d1-d4.md).
 
-Next steps:
+Next steps (details in [docs/plan-d9-d13.md](docs/plan-d9-d13.md)):
 
-1. Review the model as a team.
-2. Write the D5 script that takes a configuration, builds curl with it and runs the tests.
+1. D9: write every configuration as a full configuration, then generate a covering array
+   with a CIT tool, respecting our constraints and the machine's requirements.
+2. D10: run all configurations of the covering array, add branch coverage, and measure
+   how much the numbers change between two runs of the same configuration.
+3. D11 and D12: let an AI write tests for the branches that are still not covered, one
+   round at a time, and evaluate what each round added.
