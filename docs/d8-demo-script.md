@@ -20,6 +20,10 @@ need to wait on a build during the meeting:
 make -j2 && make -C tests
 ```
 
+On macOS, use Homebrew's OpenSSL 3 instead of plain `--with-openssl` (curl 8.17.0 does not
+build with OpenSSL 4): `--with-openssl=$(brew --prefix openssl@3)`, after
+`export PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig"`.
+
 ## 1. The model
 
 `models/curl.yaml` defines the `ldaps` option and constraint `C1`:
@@ -47,12 +51,16 @@ this is a line in the configure output that is easy to miss.
 Observed output:
 
 ```
-configure: WARNING: Cannot find libraries for LDAP support: LDAP disabled
+checking whether to support ldap... no
+checking whether to support ldaps... LDAP needs to be enabled to support LDAPS
   LDAP:             no      (--enable-ldap / --with-ldap-lib / --with-lber-lib)
   LDAPS:            no      (--enable-ldaps)
 ```
 
-Exit code is 0 — the build succeeds. The built binary:
+The second line is constraint C1 at work: LDAPS was requested, LDAP is off, so `configure`
+prints one line and drops LDAPS. Exit code is 0, so the build succeeds. This output is the
+same on Linux and on macOS, because LDAP is turned off explicitly here and does not depend
+on whether the machine has LDAP libraries. The built binary:
 
 ```sh
 ./src/curl ldaps://example.com/; echo "exit=$?"
@@ -65,9 +73,9 @@ curl: (1) Protocol "ldaps" not supported
 exit=1
 ```
 
-LDAPS was explicitly requested; `configure` reported no problem and the build
-succeeded, yet the resulting binary cannot use LDAPS at all. Nothing in the normal
-build output surfaces this unless it is specifically searched for.
+LDAPS was explicitly requested; `configure` printed a single line instead of an error and
+the build succeeded, yet the resulting binary cannot use LDAPS at all. Nothing in the
+normal build output surfaces this unless it is specifically searched for.
 
 ## 3. The gap in curl's own test suite
 
@@ -75,11 +83,12 @@ build output surfaces this unless it is specifically searched for.
 grep -lE "^ldap$|^ldaps$" tests/data/test[0-9]* 2>/dev/null
 ```
 
-Only 2 of curl's ~1,890 tests touch LDAP at all (`test445`, `test1560`), and each
-requires `<features>ldap</features>` — they run only when LDAP *is* present, so
-neither can observe the silent-drop case demonstrated above. None of curl's own
-tests check this: they confirm LDAP works when present, never what happens to
-LDAPS specifically when LDAP is absent.
+Only 2 of curl's ~1,890 tests mention LDAP at all (`test445`, `test1560`), and
+neither is an LDAP test: `test445` checks that tunneling protocols are refused through
+an HTTP proxy, and `test1560` tests the URL API. Both list `ldap` among many protocols
+in `<features>`, so they run only when LDAP *is* present, and neither can observe the
+silent-drop case demonstrated above. None of curl's own tests check what happens to
+LDAPS when LDAP is absent.
 
 ## 4. The generated test catching it
 
@@ -130,16 +139,17 @@ configuration.
 
 ## 6. Summary and open questions
 
-Four constraints have confirmed, always-silent behavior (C1, C3, C4, C5); two are
-configure-time errors (C2, C6). The four silent ones are where generated tests add
-the most value, since errors are already hard to miss. Possible next steps include
-generated tests for option combinations not yet modeled, and comparing how a
-different AI tool's generated tests would differ from these.
+Of the 6 constraints, C1, C3, C4 and C5 are always silent. C6 depends on how it is
+asked for: requesting `form-api` explicitly with MIME off is an error, but leaving
+`form-api` at its default drops it silently. C2 is always an error. The always-silent
+ones are where generated tests add the most value, since errors are already hard to
+miss. Possible next steps include generated tests for option combinations not yet
+modeled, and comparing how a different AI tool's generated tests would differ from these.
 
 Questions for the advisor:
-- Is targeting the 4 silent constraints the right scope for D7, or should error
-  constraints (C2, C6) also get generated tests, even though those are already
-  easy to notice without one?
+- Is targeting the 4 always-silent constraints the right scope for D7, or should C2
+  (always an error) and C6 (an error when requested, silent at its default) also get
+  generated tests?
 - For "before/after coverage," is a line/function coverage delta the right metric,
   or should the report also state "number of modeled constraints with at least one
   asserting test" (0/6 → 4/6)?

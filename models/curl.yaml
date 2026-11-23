@@ -3,8 +3,14 @@
 # How to read this file: see schema.md.
 # How every rule was checked: see curl_verification.md.
 #
-# It covers 22 build-time options: 11 protocols, 9 features and 2 libraries.
+# It covers 22 build-time options: 11 protocols, 9 features and 2 libraries,
+# 6 constraints between options (C1-C6), 3 effects (E1-E3) and 2 environment
+# requirements (R1, R2) that depend on what is installed on the build machine.
 # Every entry points to the lines in curl's configure.ac where it is defined.
+#
+# Three options (ldap, ipv6, zlib) default to "auto": the machine decides. A
+# configuration file must never rely on that. It gives every one of the 22 options
+# an explicit value (see "Full configurations" in schema.md).
 
 system: curl
 version: curl-8_17_0
@@ -117,9 +123,10 @@ options:
     notes: >
       If LDAP libraries are missing and the option is left at its default, configure
       silently disables LDAP and LDAPS. If --enable-ldap is given explicitly, configure
-      stops with "couldn't detect the LDAP libraries". Verified on Linux (no LDAP
-      libraries): exit 1 with that message. On macOS (LDAP libraries present) the
-      default build includes LDAP.
+      stops with "couldn't detect the LDAP libraries" (environment requirement R1).
+      On macOS (LDAP libraries present) the default build includes LDAP. A
+      configuration must set this option explicitly; ldap=enabled only works on a
+      machine that has the LDAP libraries.
 
   - id: ldaps
     kind: compile-time
@@ -208,6 +215,12 @@ options:
     auto_rule: Enabled if a test program using IPv6 sockets compiles on the machine.
     flags: {enabled: --enable-ipv6, disabled: --disable-ipv6}
     evidence: configure.ac:1653-1695
+    notes: >
+      A configuration must set this option explicitly. With --enable-ipv6, configure
+      does not run the test program at all; it simply turns IPv6 on (lines 1662-1664).
+      The default builds on our Linux and macOS machines both list IPv6 (and libz) in
+      curl --version (results/default and results/*-linux-before), so ipv6=enabled and
+      zlib=enabled match what both machines already build.
 
   - id: verbose
     kind: compile-time
@@ -245,7 +258,12 @@ options:
     default: auto
     auto_rule: Enabled if zlib is found on the machine.
     flags: {enabled: --with-zlib, disabled: --without-zlib}
-    evidence: configure.ac:1349-1393
+    evidence: configure.ac:1349-1454
+    notes: >
+      A configuration must set this option explicitly. Careful: --with-zlib does not
+      force zlib on. configure treats it the same as the default, so on a machine
+      without zlib it quietly builds without zlib (environment requirement R2). Check
+      the "zlib:" line of the configure summary, or "libz" in curl --version.
 
 constraints:
 
@@ -354,3 +372,39 @@ effects:
     verified: >
       macOS: ./configure ... --disable-ftp; make; runtests.pl 100
       -> "test 0100 SKIPPED: curl lacks ftp server support".
+
+# Environment requirements: some option values only work if the build machine has
+# certain libraries installed. They are not rules between two options, so they are
+# kept apart from the constraints. The same configuration can be fine on one machine
+# and break a requirement on another. See "Environment requirements" in schema.md.
+
+environment:
+
+  - id: R1
+    if: {ldap: enabled}
+    needs: LDAP libraries (for example OpenLDAP's libldap and liblber) on the build machine.
+    on_violation: error
+    message: "couldn't detect the LDAP libraries"
+    evidence: configure.ac:779, 2521-2524, 2539-2542
+    verified: >
+      Linux (no LDAP libraries): ./configure --without-libpsl --with-openssl --enable-ldap
+      -> exit 1 with this message. Checked again by verify_curl_constraints.sh (check R1).
+      On macOS the LDAP libraries are present (the default build there includes LDAP),
+      so the requirement is met there.
+    notes: >
+      configure only stops because ldap was asked for explicitly (ldap_askedfor, line
+      779). Left at its default, a missing library silently turns LDAP and LDAPS off.
+
+  - id: R2
+    if: {zlib: enabled}
+    needs: zlib development files (zlib.h and libz) on the build machine.
+    on_violation: silent
+    result: zlib is left out; configure continues.
+    message: null
+    evidence: configure.ac:1349-1454
+    verified: >
+      Linux, with the zlib development files (zlib.h, zconf.h, libz.so, libz.a,
+      zlib.pc) temporarily moved away: ./configure --without-libpsl --with-openssl
+      --with-zlib -> exit 0, summary "zlib: no (--with-zlib)". No warning is printed.
+      Files put back afterwards. Not part of verify_curl_constraints.sh, because the
+      check needs to remove files from the machine.

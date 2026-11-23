@@ -4,7 +4,7 @@ New tests written with AI assistance for option combinations that curl's own
 ~1,890 tests miss (deliverable D7). [tests/existing/stage2-analysis.md](../existing/stage2-analysis.md)
 found that none of curl's own tests assert any of the 6 constraints modeled in
 [models/curl.yaml](../../models/curl.yaml) as cross-build interactions; these 4
-tests fill that gap for the 4 that are silent (C1, C3, C4, C5).
+tests fill that gap for the 4 constraints that are always silent (C1, C3, C4, C5).
 
 | Test | Constraint | Build it needs | What it asserts |
 |---|---|---|---|
@@ -29,6 +29,8 @@ not written from memory of how curl "should" behave:
 
 ```sh
 # C1 - built with --enable-ldaps but LDAP itself unavailable
+# (this Linux machine has no LDAP libraries; on a machine that has them, e.g. macOS,
+#  add --disable-ldap to get the same build)
 ./configure --without-libpsl --with-openssl --enable-ldaps
 make -C lib && make -C src
 ./src/curl ldaps://example.com/
@@ -98,8 +100,15 @@ For the before/after coverage impact of adding these tests, see
 ## Not covered here: C2 and C6
 
 C2 ("a TLS backend is required") and C6 ("`form-api` requires `mime`") are not in
-this set. Both are `configure`-time **errors** (`configure` stops before a binary
-even exists), not silent runtime behavior — there is nothing for a `curl`-level test
-like these to run against. They would need a different kind of test (one that runs
-`configure` itself and checks its exit code/output), which is a reasonable next step
-but a different shape of test than the other four.
+this set, for different reasons:
+
+- **C2 is always a `configure`-time error.** `configure` stops before a binary even
+  exists, so there is nothing for a `curl`-level test like these to run against. It
+  would need a different kind of test, one that runs `configure` itself and checks its
+  exit code and output.
+- **C6 depends on how it is asked for.** Requesting `--enable-form-api` together with
+  `--disable-mime` is a `configure` error, like C2. But `--disable-mime` alone is
+  silent: `configure` succeeds and quietly leaves the form API out. That silent case
+  produces a real binary and could get a test of its own (the form API is a libcurl
+  function, so it would be a libcurl test rather than a `curl` command-line test). This
+  is a reasonable next step.
