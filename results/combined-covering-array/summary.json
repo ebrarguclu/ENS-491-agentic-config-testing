@@ -1,0 +1,31 @@
+{
+  "kind": "combined",
+  "name": "combined-covering-array",
+  "machine": "Darwin arm64",
+  "curl_source": "curl-8_17_0",
+  "date": "2026-11-25 01:08",
+  "runs": [
+    "ca-01",
+    "ca-02",
+    "ca-03",
+    "ca-04",
+    "ca-05",
+    "ca-06",
+    "ca-07",
+    "ca-08",
+    "ca-09",
+    "ca-10"
+  ],
+  "runs_without_branch_data": [],
+  "coverage": {
+    "lines_covered": 36441,
+    "lines_total": 55980,
+    "lines_percent": 65.1,
+    "functions_covered": 2110,
+    "functions_total": 2670,
+    "functions_percent": 79.0,
+    "branches_covered": 20404,
+    "branches_total": 43651,
+    "branches_percent": 46.7
+  }
+}

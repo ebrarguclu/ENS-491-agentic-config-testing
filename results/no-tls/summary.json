@@ -2,24 +2,27 @@
   "name": "no-tls",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 15:01",
+  "date": "2026-11-25 01:08",
   "configure_flags": "--without-libpsl --without-ssl",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 43
+    "seconds": 39
   },
   "tests": {
     "selection": "all",
-    "runtests_exit": 0,
-    "seconds": 427,
+    "runtests_exit": 1,
+    "seconds": 431,
     "ran": 1463,
-    "passed": 1463,
-    "failed": 0,
+    "passed": 1461,
+    "failed": 2,
     "skipped": 427,
-    "failed_tests": [],
+    "failed_tests": [
+      "20",
+      "507"
+    ],
     "skip_reasons": {
       "curl lacks SSL support": 85,
       "curl lacks Debug support": 69,
@@ -93,11 +96,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 33785,
+    "lines_covered": 33761,
     "lines_total": 49355,
-    "lines_percent": 68.5,
-    "functions_covered": 1950,
+    "lines_percent": 68.4,
+    "functions_covered": 1949,
     "functions_total": 2395,
-    "functions_percent": 81.4
+    "functions_percent": 81.4,
+    "branches_covered": 17808,
+    "branches_total": 37994,
+    "branches_percent": 46.9
   }
 }
