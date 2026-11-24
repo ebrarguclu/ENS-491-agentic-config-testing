@@ -80,6 +80,22 @@ This writes [results/coverage_table.md](../results/coverage_table.md) from the
 `summary.json` of every run. To compare configurations fairly, run them all with the same
 tests. On our Mac the full test suite takes about 3 to 8 minutes per configuration.
 
+### Combined coverage of several runs (D10)
+
+To see how much of curl a whole set of configurations covers together:
+
+```sh
+.venv/bin/python scripts/config_tools.py merge combined-covering-array results/ca-*
+```
+
+This merges the `coverage/lcov.info` of every run with `lcov --add-tracefile` and writes
+`results/<name>/summary.json`. A line, function or branch counts as covered if **any** of
+the runs covered it, and the total is all the code compiled in at least one run. The
+`table` command then lists it in its own section.
+
+`merge` refuses runs from different machines or curl versions. If one of the runs has no
+branch data (made before D10), the combined branch numbers are left out.
+
 | Exit code | Meaning |
 |---|---|
 | 0 | curl was built and no test failed |

@@ -9,8 +9,13 @@ two small jobs live here.
       Reads the logs in <results-dir> and writes summary.json. Exits 0 only if the build
       worked and no test failed.
 
-  config_tools.py table <results-dir>
-      Writes coverage_table.md from all the summary.json files in <results-dir>.
+  config_tools.py table <results-dir> [--machine "Darwin arm64"]
+      Writes coverage_table.md from all the summary.json files in <results-dir>, or only
+      from the runs made on one machine.
+
+  config_tools.py merge <name> <run-dir> <run-dir> ...
+      Combines the coverage of several runs into results/<name>/: a line or branch counts
+      as covered if any of the runs covered it.
 
 This file does not check the rules between options. A combination that breaks a rule is
 passed to configure on purpose, because seeing what configure does with it is the point.
@@ -19,7 +24,9 @@ passed to configure on purpose, because seeing what configure does with it is th
 import argparse
 import json
 import re
+import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -186,44 +193,165 @@ def cmd_summary(args):
     sys.exit(0 if all_good else 1)
 
 
-def cmd_table(results_dir):
-    """Writes results/coverage_table.md from every results/<name>/summary.json."""
+def lcov_options():
+    """The same branch settings run_config.sh uses (the name changed in lcov 2.0)."""
+    version = subprocess.run(["lcov", "--version"], capture_output=True, text=True).stdout
+    major = re.search(r"version (\d+)", version)
+    if major and int(major.group(1)) >= 2:
+        return ["--rc", "branch_coverage=1", "--ignore-errors", "inconsistent,inconsistent"]
+    return ["--rc", "lcov_branch_coverage=1"]
+
+
+def cmd_merge(name, run_dirs, results_dir):
+    """Combines the lcov.info of several runs into results/<name>/.
+
+    A line, function or branch counts as covered if any of the runs covered it. The total
+    is all the code compiled in at least one of the runs.
+    """
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", name):
+        die(f"name must use only letters, digits, '.', '_', '-' (got '{name}')")
+    if len(run_dirs) < 2:
+        die("give at least two run folders to merge")
+
+    runs = []
+    for run_dir in run_dirs:
+        run = Path(run_dir)
+        info, summary = run / "coverage" / "lcov.info", run / "summary.json"
+        if not info.exists() or not summary.exists():
+            die(f"{run} has no coverage/lcov.info or summary.json")
+        s = json.loads(summary.read_text())
+        runs.append({"dir": run, "info": info, "summary": s})
+
+    # Coverage from different machines or curl versions would mix two different things.
+    for key in ("machine", "curl_source"):
+        found = sorted({r["summary"][key] for r in runs})
+        if len(found) > 1:
+            die(f"the runs differ in {key}: {', '.join(found)}")
+
+    out = Path(results_dir) / name
+    coverage_dir = out / "coverage"
+    coverage_dir.mkdir(parents=True, exist_ok=True)
+    command = ["lcov", *lcov_options()]
+    for r in runs:
+        command += ["--add-tracefile", str(r["info"].resolve())]
+    command += ["--output-file", str((coverage_dir / "lcov.info").resolve())]
+    with open(coverage_dir / "lcov.log", "w") as log:
+        if subprocess.run(command, stdout=log, stderr=subprocess.STDOUT).returncode != 0:
+            die(f"lcov could not merge the runs, see {coverage_dir / 'lcov.log'}")
+
+    coverage = parse_coverage(coverage_dir / "lcov.info")
+    if coverage is None:
+        die(f"the merged file is empty, see {coverage_dir / 'lcov.log'}")
+    # If one run has no branch data, the merged branch numbers would be too low.
+    missing = [r["summary"]["name"] for r in runs
+               if not (r["summary"].get("coverage") or {}).get("branches_total")]
+    if missing:
+        for key in ("branches_covered", "branches_total", "branches_percent"):
+            coverage[key] = None
+
+    first = runs[0]["summary"]
+    summary = {
+        "kind": "combined",
+        "name": name,
+        "machine": first["machine"],
+        "curl_source": first["curl_source"],
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "runs": [r["summary"]["name"] for r in runs],
+        "runs_without_branch_data": missing,
+        "coverage": coverage,
+    }
+    (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+
+    print(f"Combined:      {name} ({len(runs)} runs: {', '.join(summary['runs'])})")
+    print(f"Coverage:      {coverage['lines_percent']}% of lines "
+          f"({coverage['lines_covered']} of {coverage['lines_total']})")
+    print(f"               {coverage['functions_percent']}% of functions "
+          f"({coverage['functions_covered']} of {coverage['functions_total']})")
+    if missing:
+        print(f"               branches: not available, no branch data in {', '.join(missing)}")
+    else:
+        print(f"               {coverage['branches_percent']}% of branches "
+              f"({coverage['branches_covered']} of {coverage['branches_total']})")
+    print(f"Results:       {out}")
+
+
+def cmd_table(results_dir, machine=None):
+    """Writes results/coverage_table.md from every results/<name>/summary.json.
+
+    With a machine, only runs from that machine are listed, so that numbers from two
+    machines do not end up in one table.
+    """
     results = Path(results_dir)
-    summaries = [json.loads(p.read_text()) for p in sorted(results.glob("*/summary.json"))]
-    if not summaries:
-        die(f"no summary.json found under {results}")
+    everything = [json.loads(p.read_text()) for p in sorted(results.glob("*/summary.json"))]
+    if machine:
+        everything = [s for s in everything if s.get("machine") == machine]
+    if not everything:
+        die(f"no summary.json found under {results}" + (f" for machine '{machine}'" if machine else ""))
+    summaries = [s for s in everything if s.get("kind") != "combined"]
+    combined = sorted((s for s in everything if s.get("kind") == "combined"),
+                      key=lambda s: s["name"])
     summaries.sort(key=lambda s: (s["name"] != "default", s["name"]))
+
+    combined_rows = []
+    for s in combined:
+        c = s["coverage"]
+        branches = f"{c['branches_percent']}%" if c.get("branches_total") else "-"
+        combined_rows.append(
+            f"| {s['name']} | {len(s['runs'])}: {', '.join(s['runs'])} | {s['machine']} "
+            f"| {c['lines_percent']}% | {c['lines_covered']:,} / {c['lines_total']:,} "
+            f"| {c['functions_percent']}% | {branches} |"
+        )
 
     rows = []
     for s in summaries:
         config = load_yaml(results / s["name"] / "config.yaml")
-        values = ", ".join(f"{k}={v}" for k, v in (config.get("values") or {}).items()) or "(none)"
+        chosen = config.get("values") or {}
+        if len(chosen) > 5:
+            # A full configuration is too long for one cell; link to it instead.
+            values = f"[{len(chosen)} options]({s['name']}/config.yaml)"
+        else:
+            values = "`" + (", ".join(f"{k}={v}" for k, v in chosen.items()) or "(none)") + "`"
         t, c = s["tests"], s["coverage"]
         if t and c:
             # Runs from before branch coverage was added have no branch numbers.
             branches = f"{c['branches_percent']}%" if c.get("branches_total") else "-"
             rows.append(
-                f"| {s['name']} | `{values}` | {t['selection']} | {t['passed']} | {t['failed']} "
-                f"| {t['skipped']} | {c['lines_percent']}% | {c['lines_covered']:,} / {c['lines_total']:,} "
-                f"| {c['functions_percent']}% | {branches} |"
+                f"| {s['name']} | {values} | {s['machine']} | {s['date']} | {t['selection']} "
+                f"| {t['passed']} | {t['failed']} | {t['skipped']} | {c['lines_percent']}% "
+                f"| {c['lines_covered']:,} / {c['lines_total']:,} | {c['functions_percent']}% "
+                f"| {branches} |"
             )
         else:
-            rows.append(f"| {s['name']} | `{values}` | - | build failed | - | - | - | - | - | - |")
+            rows.append(f"| {s['name']} | {values} | {s['machine']} | {s['date']} "
+                        f"| - | build failed | - | - | - | - | - | - |")
 
     first = summaries[0]
+    combined_section = [] if not combined_rows else [
+        "## Combined coverage of several runs (D10)",
+        "",
+        "Written by `scripts/config_tools.py merge`. A line, function or branch counts as",
+        "covered if **any** of the runs covered it. The total is all the code compiled in at",
+        "least one of the runs.",
+        "",
+        "| Name | Runs | Machine | Line coverage | Lines covered / total | Function coverage | Branch coverage |",
+        "|---|---|---|---|---|---|---|",
+        *combined_rows,
+        "",
+    ]
     text = "\n".join([
-        "# Coverage per configuration (D6)",
+        "# Coverage per configuration (D6, D10)",
         "",
         "Generated by `scripts/config_tools.py table results`. Do not edit by hand.",
         "",
-        f"- Machine: {first['machine']}",
         f"- curl: {first['curl_source']}",
-        f"- Date of the first run listed: {first['date']}",
+        "- Compare runs only from the same machine: test servers and libraries differ between",
+        "  machines, so the same configuration gives different numbers.",
         "",
-        "| Configuration | Values | Tests run | Passed | Failed | Skipped | Line coverage | Lines covered / total | Function coverage | Branch coverage |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| Configuration | Values | Machine | Date | Tests run | Passed | Failed | Skipped | Line coverage | Lines covered / total | Function coverage | Branch coverage |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
         *rows,
         "",
+        *combined_section,
         "## How to read this table",
         "",
         "Each percentage is measured against the code of **that** build. Turning an option off",
@@ -263,12 +391,20 @@ def main():
 
     table = commands.add_parser("table")
     table.add_argument("results_dir")
+    table.add_argument("--machine", help='only list runs from this machine, e.g. "Darwin arm64"')
+
+    merge = commands.add_parser("merge")
+    merge.add_argument("name")
+    merge.add_argument("run_dirs", nargs="+")
+    merge.add_argument("--results-dir", default=str(Path(__file__).resolve().parent.parent / "results"))
 
     args = parser.parse_args()
     if args.command == "flags":
         cmd_flags(args.model, args.config)
     elif args.command == "table":
-        cmd_table(args.results_dir)
+        cmd_table(args.results_dir, args.machine)
+    elif args.command == "merge":
+        cmd_merge(args.name, args.run_dirs, args.results_dir)
     else:
         cmd_summary(args)
 
