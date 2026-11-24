@@ -108,7 +108,9 @@ def parse_coverage(path):
     info = Path(path)
     if not info.exists():
         return None
-    totals = {"LF": 0, "LH": 0, "FNF": 0, "FNH": 0}
+    # LF/LH: lines found/hit, FNF/FNH: functions, BRF/BRH: branches (one per direction of
+    # each if/switch decision).
+    totals = {"LF": 0, "LH": 0, "FNF": 0, "FNH": 0, "BRF": 0, "BRH": 0}
     for line in info.read_text(errors="replace").splitlines():
         key, _, value = line.partition(":")
         if key in totals:
@@ -126,6 +128,9 @@ def parse_coverage(path):
         "functions_covered": totals["FNH"],
         "functions_total": totals["FNF"],
         "functions_percent": percent(totals["FNH"], totals["FNF"]),
+        "branches_covered": totals["BRH"],
+        "branches_total": totals["BRF"],
+        "branches_percent": percent(totals["BRH"], totals["BRF"]),
     }
 
 
@@ -171,6 +176,8 @@ def cmd_summary(args):
     if coverage:
         print(f"Coverage:      {coverage['lines_percent']}% of lines "
               f"({coverage['lines_covered']} of {coverage['lines_total']})")
+        print(f"               {coverage['branches_percent']}% of branches "
+              f"({coverage['branches_covered']} of {coverage['branches_total']})")
     elif tests:
         print(f"Coverage:      NOT AVAILABLE, see {results / 'coverage' / 'lcov.log'}")
     print(f"Results:       {results}")
@@ -193,13 +200,15 @@ def cmd_table(results_dir):
         values = ", ".join(f"{k}={v}" for k, v in (config.get("values") or {}).items()) or "(none)"
         t, c = s["tests"], s["coverage"]
         if t and c:
+            # Runs from before branch coverage was added have no branch numbers.
+            branches = f"{c['branches_percent']}%" if c.get("branches_total") else "-"
             rows.append(
                 f"| {s['name']} | `{values}` | {t['selection']} | {t['passed']} | {t['failed']} "
                 f"| {t['skipped']} | {c['lines_percent']}% | {c['lines_covered']:,} / {c['lines_total']:,} "
-                f"| {c['functions_percent']}% |"
+                f"| {c['functions_percent']}% | {branches} |"
             )
         else:
-            rows.append(f"| {s['name']} | `{values}` | - | build failed | - | - | - | - | - |")
+            rows.append(f"| {s['name']} | `{values}` | - | build failed | - | - | - | - | - | - |")
 
     first = summaries[0]
     text = "\n".join([
@@ -211,8 +220,8 @@ def cmd_table(results_dir):
         f"- curl: {first['curl_source']}",
         f"- Date of the first run listed: {first['date']}",
         "",
-        "| Configuration | Values | Tests run | Passed | Failed | Skipped | Line coverage | Lines covered / total | Function coverage |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Configuration | Values | Tests run | Passed | Failed | Skipped | Line coverage | Lines covered / total | Function coverage | Branch coverage |",
+        "|---|---|---|---|---|---|---|---|---|---|",
         *rows,
         "",
         "## How to read this table",
@@ -220,6 +229,9 @@ def cmd_table(results_dir):
         "Each percentage is measured against the code of **that** build. Turning an option off",
         "removes code, so the total changes too. A higher percentage does not always mean more",
         "code was tested: compare the \"Lines covered / total\" column as well.",
+        "",
+        "Branch coverage counts both directions of every `if`/`switch` decision. A \"-\" means",
+        "the run was made before branch coverage was measured.",
         "",
         "A test is skipped when this build or this machine lacks something it needs. The reasons",
         "for each run are in `skip_reasons` in `results/<configuration>/summary.json`.",

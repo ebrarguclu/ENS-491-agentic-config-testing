@@ -64,7 +64,7 @@ The script:
 1. turns the configuration into `configure` flags, using `models/curl.yaml`,
 2. removes the previous build, then runs `configure` and `make`,
 3. runs curl's tests (`runtests.pl -a -n`, so a failed test does not stop the run),
-4. collects code coverage with `lcov`,
+4. collects line, function and branch coverage with `lcov`,
 5. saves everything in `results/<configuration-name>/`, replacing an earlier run with that
    name. See [results/README.md](../results/README.md).
 
@@ -100,6 +100,14 @@ tests. On our Mac the full test suite takes about 3 to 8 minutes per configurati
 - Coverage uses `CFLAGS="--coverage -O0 -g"`, not curl's `--enable-code-coverage`. With
   Apple Clang that flag produces LLVM coverage data, which `lcov` cannot read.
 - Coverage counts can differ by a few lines between two runs of the same configuration.
+- Branch coverage (D10) counts both directions of every `if`/`switch` decision. The script
+  turns it on with `--rc branch_coverage=1` on lcov 2.x and `--rc lcov_branch_coverage=1`
+  on lcov 1.x. Runs made before D10 have no branch numbers; the table shows `-` for them.
+- lcov 2.x stops when a line ran but none of its branches did. With Apple Clang this
+  happens for a few branches whose condition spans several lines (4 of about 35,000 in
+  our test run), so the script reports them as warnings in `coverage/lcov.log` instead.
+- If lcov cannot read the test counts at all, the script prints a `WARNING`. The coverage
+  of that run is then not real.
 
 Tested on macOS (Apple Silicon) for D5 and D6, and on Ubuntu 24.04 for the D7 runs
 (see [tests/generated/before-after.md](../tests/generated/before-after.md)).
