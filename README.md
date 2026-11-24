@@ -110,7 +110,7 @@ in detail at source-code level. The full comparison of all seven systems is in
 | D6 | Coverage numbers for different configurations | [results/coverage_table.md](results/coverage_table.md) | Rana Keleş | Done |
 | D7 | Tests written by AI, with before/after coverage | [tests/generated/](tests/generated/), [tests/existing/stage2-analysis.md](tests/existing/stage2-analysis.md) | Fethiye Ebrar Güçlü | Done |
 | D8 | Live demo for the advisor | [docs/d8-demo-script.md](docs/d8-demo-script.md) | Fethiye Ebrar Güçlü | Done |
-| D9 | Full configurations and a covering array of them | [models/schema.md](models/schema.md#full-configurations), covering array files | Safiye Nur Narman, Rana Keleş | In progress |
+| D9 | Full configurations and a covering array of them | [models/schema.md](models/schema.md#full-configurations), [models/covering-array/](models/covering-array/README.md) | Safiye Nur Narman, Rana Keleş, Fethiye Ebrar Güçlü | In progress (covering array done) |
 | D10 | Run every configuration, measure line, function and branch coverage, and the combined coverage of all runs | results of the runs | Rana Keleş | Planned |
 | D11 | A step-by-step loop where an AI writes tests for code that is still not covered | generated tests and a log of every round | Fethiye Ebrar Güçlü, Safiye Nur Narman | Planned |
 | D12 | Evaluation: what the AI-written tests added, round by round | evaluation report | Rana Keleş | Planned |
@@ -135,15 +135,21 @@ After that:
   The number of rules with a test that checks them went from 0 of 6 to 4 of 6
   ([tests/generated/](tests/generated/)).
 - **D8.** A live demo of the whole pipeline ([docs/d8-demo-script.md](docs/d8-demo-script.md)).
+- **D9 (covering array).** Full configurations are now required (every option gets a
+  real value, never `auto`), and a 2-way covering array of 10 full configurations
+  replaces the 8 hand-picked ones, generated and independently verified with
+  [scripts/covering_array.py](scripts/covering_array.py)
+  ([models/covering-array/README.md](models/covering-array/README.md)). Still open in
+  D9: a check in `config_tools.py` that rejects a configuration which is not full.
 
 The full story of D1 to D4, including the commands we ran, is in the
 [progress report](docs/progress-d1-d4.md).
 
 Next steps (details in [docs/plan-d9-d13.md](docs/plan-d9-d13.md)):
 
-1. D9: write every configuration as a full configuration, then generate a covering array
-   with a CIT tool, respecting our constraints and the machine's requirements.
-2. D10: run all configurations of the covering array, add branch coverage, and measure
+1. D9: add the remaining check to `config_tools.py` that rejects a configuration that
+   is not full.
+2. D10: run all 10 configurations of the covering array, add branch coverage, and measure
    how much the numbers change between two runs of the same configuration.
 3. D11 and D12: let an AI write tests for the branches that are still not covered, one
    round at a time, and evaluate what each round added.

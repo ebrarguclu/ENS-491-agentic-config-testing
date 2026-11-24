@@ -1,0 +1,39 @@
+# PICT model generated from models/curl.yaml (curl curl-8_17_0).
+# Do not edit by hand -- regenerate with:
+#   python3 scripts/covering_array.py model-to-pict models/curl.yaml models/covering-array/curl.pict.txt
+#
+# One parameter per option (22 for curl). Values match the model's `values`
+# list exactly; "auto" is never a parameter value here, because every row of
+# a covering array must be a full configuration (models/schema.md).
+
+http: enabled, disabled
+ftp: enabled, disabled
+smtp: enabled, disabled
+imap: enabled, disabled
+pop3: enabled, disabled
+telnet: enabled, disabled
+tftp: enabled, disabled
+dict: enabled, disabled
+mqtt: enabled, disabled
+ldap: enabled, disabled
+ldaps: enabled, disabled
+proxy: enabled, disabled
+cookies: enabled, disabled
+http-auth: enabled, disabled
+mime: enabled, disabled
+form-api: enabled, disabled
+alt-svc: enabled, disabled
+hsts: enabled, disabled
+ipv6: enabled, disabled
+verbose: enabled, disabled
+tls: openssl, none
+zlib: enabled, disabled
+
+# Constraints below come only from rules whose on_violation is "error" --
+# a combination PICT must avoid because it simply fails to build, not
+# because it is uninteresting. Silent constraints (on_violation: silent)
+# are intentionally left unconstrained: a row that triggers one of them is
+# exactly the kind of row this project wants in the covering array.
+# C2: "tls" is mandatory; already guaranteed, every PICT parameter always gets a value
+# C6
+IF [form-api] = "enabled" THEN [mime] = "enabled";

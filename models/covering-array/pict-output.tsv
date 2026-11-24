@@ -1,0 +1,11 @@
+http	ftp	smtp	imap	pop3	telnet	tftp	dict	mqtt	ldap	ldaps	proxy	cookies	http-auth	mime	form-api	alt-svc	hsts	ipv6	verbose	tls	zlib
+enabled	enabled	enabled	enabled	enabled	disabled	disabled	enabled	disabled	disabled	enabled	enabled	enabled	disabled	disabled	disabled	enabled	disabled	disabled	enabled	none	enabled
+disabled	disabled	disabled	disabled	disabled	enabled	enabled	disabled	enabled	enabled	disabled	enabled	disabled	enabled	enabled	enabled	disabled	enabled	enabled	disabled	openssl	disabled
+enabled	disabled	enabled	enabled	disabled	enabled	disabled	enabled	enabled	disabled	disabled	disabled	disabled	disabled	enabled	disabled	enabled	enabled	disabled	disabled	openssl	enabled
+disabled	enabled	disabled	disabled	enabled	disabled	enabled	disabled	disabled	enabled	enabled	disabled	enabled	enabled	disabled	disabled	disabled	disabled	enabled	enabled	none	enabled
+disabled	disabled	enabled	disabled	enabled	enabled	disabled	disabled	disabled	disabled	disabled	disabled	enabled	disabled	disabled	disabled	disabled	enabled	disabled	enabled	openssl	disabled
+enabled	enabled	disabled	enabled	disabled	disabled	enabled	enabled	enabled	enabled	enabled	disabled	disabled	disabled	enabled	enabled	enabled	enabled	enabled	enabled	none	disabled
+enabled	enabled	enabled	enabled	enabled	enabled	enabled	disabled	enabled	disabled	disabled	disabled	enabled	enabled	enabled	enabled	disabled	disabled	disabled	disabled	none	enabled
+disabled	disabled	disabled	disabled	disabled	disabled	disabled	enabled	disabled	enabled	enabled	disabled	disabled	enabled	enabled	enabled	enabled	disabled	disabled	disabled	openssl	disabled
+enabled	disabled	enabled	disabled	disabled	enabled	disabled	disabled	enabled	enabled	enabled	disabled	enabled	enabled	disabled	disabled	enabled	disabled	enabled	disabled	none	disabled
+disabled	enabled	disabled	enabled	enabled	disabled	disabled	enabled	enabled	disabled	disabled	disabled	disabled	disabled	disabled	disabled	disabled	enabled	enabled	disabled	openssl	enabled

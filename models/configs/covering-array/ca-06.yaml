@@ -1,0 +1,28 @@
+name: ca-06
+system: curl
+values:
+  # protocols (11)
+  http: enabled
+  ftp: enabled
+  smtp: disabled
+  imap: enabled
+  pop3: disabled
+  telnet: disabled
+  tftp: enabled
+  dict: enabled
+  mqtt: enabled
+  ldap: enabled
+  ldaps: enabled
+  # features (9)
+  proxy: disabled
+  cookies: disabled
+  http-auth: disabled
+  mime: enabled
+  form-api: enabled
+  alt-svc: enabled
+  hsts: enabled
+  ipv6: enabled
+  verbose: enabled
+  # libraries (2)
+  tls: none
+  zlib: disabled

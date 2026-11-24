@@ -35,20 +35,25 @@ correct documents:
 | D12 | Evaluation | Coverage gained per round, compared with the covering array alone. How many AI-written tests worked. Which gains are larger than the run-to-run difference measured in D10 | Rana Keleş | D11 |
 | D13 | Final report and presentation | Write up D1 to D12 and prepare the presentation | All, led by Fethiye Ebrar Güçlü | D12 |
 
+## Decisions made while building the covering array (D9)
+
+- **Which CIT tool: PICT, not ACTS.** ACTS with constraint support has to be requested
+  from NIST by email and waited for; PICT is open source, supports the same constraints,
+  and was already usable the same day (built from
+  [microsoft/pict](https://github.com/microsoft/pict)). We used PICT and did not wait on
+  an ACTS request.
+- **`ldap` on Linux: installed the library.** We installed `libldap-dev` instead of
+  forbidding `ldap: enabled` on Linux. Confirmed with `./configure --enable-ldap`:
+  `LDAP: enabled (OpenLDAP)`. Both values of `ldap` are now buildable on this machine, so
+  the covering array did not need to treat it as a forbidden value.
+- **The covering array does not avoid our silent constraints.** Only the two error-type
+  rules (C2, C6) were turned into PICT exclusion constraints. C1, C3, C4 and C5 were left
+  free, and 6 of the resulting 10 rows do hit one of them. See
+  [models/covering-array/README.md](../models/covering-array/README.md) for the full
+  method and the verification that every required option-value pair is actually covered.
+
 ## Decisions we still have to make
 
-- **Which CIT tool.** NIST ACTS and Microsoft PICT both generate covering arrays. PICT is
-  open source and supports constraints. The basic version of ACTS can be downloaded
-  directly, while the version with constraint support has to be requested from NIST by
-  email.
-- **What to do with `ldap` on Linux.** Our Linux machine has no LDAP libraries, so
-  `ldap: enabled` stops the build there (R1 in [models/curl.yaml](../models/curl.yaml)).
-  We can either forbid that value on Linux, like a constraint, or install the LDAP
-  development libraries so both values can be tested.
-- **Whether the covering array may break our constraints.** The silent constraints are
-  the interesting part of our project, so excluding them would hide exactly what we want
-  to see. But a combination that is an error (C2, or C6 with `form-api` given
-  explicitly) only wastes a build.
 - **The stopping rule for D11.** For example: stop after a fixed number of rounds, or
   when one round adds less coverage than the run-to-run difference from D10.
 
