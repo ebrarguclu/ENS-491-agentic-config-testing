@@ -15,7 +15,7 @@
 #   tests.log          output of curl's test runner
 #   curl_version.txt   `curl --version` of the curl that was really built
 #   summary.json       build result, passed/failed/skipped counts and coverage
-#   coverage/          lcov.info (line-by-line coverage data) and lcov.log
+#   coverage/          lcov.info (line, function and branch coverage data) and lcov.log
 #
 # Exit code: 0 = built and no test failed, 1 = build failed or a test failed,
 # 2 = could not start (bad arguments, missing setup).
@@ -51,6 +51,17 @@ PATH="$(echo "$PATH" | tr ':' '\n' | grep -vi xampp | paste -sd: -)"
 export PATH
 
 command -v lcov >/dev/null 2>&1 || { echo "error: lcov not found (see 'First-time setup' in scripts/README.md)"; exit 2; }
+
+# lcov skips branch coverage unless asked. The setting was renamed in lcov 2.0.
+# lcov 2.x also stops when a line is hit but none of its branches is. With Apple Clang
+# this happens for a handful of branches whose condition spans several lines (4 of about
+# 35,000 in our test run), so we report them as warnings in lcov.log instead.
+LCOV_MAJOR="$(lcov --version 2>/dev/null | sed -n 's/.*version \([0-9][0-9]*\).*/\1/p')"
+if [ "${LCOV_MAJOR:-1}" -ge 2 ]; then
+  LCOV_OPTS=(--rc branch_coverage=1 --ignore-errors inconsistent,inconsistent)
+else
+  LCOV_OPTS=(--rc lcov_branch_coverage=1)
+fi
 
 # On macOS, Homebrew's plain `openssl` is version 4, which curl 8.17.0 cannot use.
 OPENSSL_FLAG="--with-openssl"
@@ -137,20 +148,27 @@ if [ "$TESTS_BUILD_EXIT" = "0" ]; then
   mkdir -p "$COVERAGE"
   (
     cd "$CURL_DIR" || exit 1
+    # Every lcov call gets "${LCOV_OPTS[@]}", otherwise that step drops the branch data.
     # The zero-count map of all compiled code, so code the tests never reach still counts.
-    lcov --capture --initial --directory lib --directory src --output-file "$COVERAGE/base.info"
+    lcov "${LCOV_OPTS[@]}" --capture --initial --directory lib --directory src \
+      --output-file "$COVERAGE/base.info"
     # The real counts. This fails if no test ran at all, and then only the map is used.
-    lcov --capture --directory lib --directory src --output-file "$COVERAGE/tests.info"
+    lcov "${LCOV_OPTS[@]}" --capture --directory lib --directory src \
+      --output-file "$COVERAGE/tests.info"
     if [ -s "$COVERAGE/tests.info" ]; then
-      lcov --add-tracefile "$COVERAGE/base.info" --add-tracefile "$COVERAGE/tests.info" \
-        --output-file "$COVERAGE/all.info"
+      lcov "${LCOV_OPTS[@]}" --add-tracefile "$COVERAGE/base.info" \
+        --add-tracefile "$COVERAGE/tests.info" --output-file "$COVERAGE/all.info"
     else
       cp "$COVERAGE/base.info" "$COVERAGE/all.info"
     fi
     # Keep curl's own code only, not system headers.
-    lcov --extract "$COVERAGE/all.info" "$CURL_DIR/lib/*" "$CURL_DIR/src/*" \
+    lcov "${LCOV_OPTS[@]}" --extract "$COVERAGE/all.info" "$CURL_DIR/lib/*" "$CURL_DIR/src/*" \
       --output-file "$COVERAGE/lcov.info"
   ) > "$RESULTS/coverage/lcov.log" 2>&1
+  # Without the real counts the result would look like 0% coverage. Say so loudly.
+  if [ ! -s "$COVERAGE/tests.info" ]; then
+    echo "WARNING: lcov could not read the test counts, so coverage is not real. See $COVERAGE/lcov.log"
+  fi
   rm -f "$COVERAGE/base.info" "$COVERAGE/tests.info" "$COVERAGE/all.info"
 else
   echo "Build failed, see $BUILD_LOG"
