@@ -2,24 +2,27 @@
   "name": "no-ftp",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 14:48",
+  "date": "2026-11-25 00:40",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-ftp",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 45
+    "seconds": 41
   },
   "tests": {
     "selection": "all",
-    "runtests_exit": 0,
-    "seconds": 360,
+    "runtests_exit": 1,
+    "seconds": 358,
     "ran": 1330,
-    "passed": 1330,
-    "failed": 0,
+    "passed": 1328,
+    "failed": 2,
     "skipped": 560,
-    "failed_tests": [],
+    "failed_tests": [
+      "20",
+      "507"
+    ],
     "skip_reasons": {
       "curl lacks ftp server support": 252,
       "curl lacks Debug support": 95,
@@ -98,11 +101,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 33403,
+    "lines_covered": 33366,
     "lines_total": 52142,
-    "lines_percent": 64.1,
-    "functions_covered": 1971,
+    "lines_percent": 64.0,
+    "functions_covered": 1970,
     "functions_total": 2564,
-    "functions_percent": 76.9
+    "functions_percent": 76.8,
+    "branches_covered": 17329,
+    "branches_total": 39646,
+    "branches_percent": 43.7
   }
 }

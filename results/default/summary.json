@@ -2,24 +2,27 @@
   "name": "default",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 14:41",
+  "date": "2026-11-25 00:15",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 44
+    "seconds": 41
   },
   "tests": {
     "selection": "all",
-    "runtests_exit": 0,
-    "seconds": 488,
+    "runtests_exit": 1,
+    "seconds": 474,
     "ran": 1603,
-    "passed": 1603,
-    "failed": 0,
+    "passed": 1601,
+    "failed": 2,
     "skipped": 287,
-    "failed_tests": [],
+    "failed_tests": [
+      "20",
+      "507"
+    ],
     "skip_reasons": {
       "curl lacks Debug support": 95,
       "no stunnel": 59,
@@ -97,11 +100,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 37199,
+    "lines_covered": 37186,
     "lines_total": 55069,
     "lines_percent": 67.5,
-    "functions_covered": 2159,
+    "functions_covered": 2158,
     "functions_total": 2666,
-    "functions_percent": 81.0
+    "functions_percent": 80.9,
+    "branches_covered": 19506,
+    "branches_total": 41953,
+    "branches_percent": 46.5
   }
 }

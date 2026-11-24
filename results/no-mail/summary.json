@@ -2,24 +2,27 @@
   "name": "no-mail",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 15:25",
+  "date": "2026-11-25 00:52",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-smtp --disable-imap --disable-pop3",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 43
+    "seconds": 41
   },
   "tests": {
     "selection": "all",
-    "runtests_exit": 0,
-    "seconds": 438,
+    "runtests_exit": 1,
+    "seconds": 437,
     "ran": 1414,
-    "passed": 1414,
-    "failed": 0,
+    "passed": 1412,
+    "failed": 2,
     "skipped": 476,
-    "failed_tests": [],
+    "failed_tests": [
+      "20",
+      "507"
+    ],
     "skip_reasons": {
       "curl lacks Debug support": 95,
       "curl lacks smtp server support": 77,
@@ -98,11 +101,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 34292,
+    "lines_covered": 34268,
     "lines_total": 52022,
     "lines_percent": 65.9,
-    "functions_covered": 1988,
+    "functions_covered": 1987,
     "functions_total": 2500,
-    "functions_percent": 79.5
+    "functions_percent": 79.5,
+    "branches_covered": 17905,
+    "branches_total": 39875,
+    "branches_percent": 44.9
   }
 }

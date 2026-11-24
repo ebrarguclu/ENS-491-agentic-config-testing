@@ -1,0 +1,28 @@
+name: ca-03
+system: curl
+values:
+  # protocols (11)
+  http: enabled
+  ftp: disabled
+  smtp: enabled
+  imap: enabled
+  pop3: disabled
+  telnet: enabled
+  tftp: disabled
+  dict: enabled
+  mqtt: enabled
+  ldap: disabled
+  ldaps: disabled
+  # features (9)
+  proxy: disabled
+  cookies: disabled
+  http-auth: disabled
+  mime: enabled
+  form-api: disabled
+  alt-svc: enabled
+  hsts: enabled
+  ipv6: disabled
+  verbose: disabled
+  # libraries (2)
+  tls: openssl
+  zlib: enabled

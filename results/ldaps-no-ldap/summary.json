@@ -2,24 +2,27 @@
   "name": "ldaps-no-ldap",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 15:34",
+  "date": "2026-11-25 00:24",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-ldap --enable-ldaps",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 42
+    "seconds": 40
   },
   "tests": {
     "selection": "all",
-    "runtests_exit": 0,
-    "seconds": 474,
+    "runtests_exit": 1,
+    "seconds": 476,
     "ran": 1602,
-    "passed": 1602,
-    "failed": 0,
+    "passed": 1600,
+    "failed": 2,
     "skipped": 288,
-    "failed_tests": [],
+    "failed_tests": [
+      "20",
+      "507"
+    ],
     "skip_reasons": {
       "curl lacks Debug support": 95,
       "no stunnel": 59,
@@ -95,11 +98,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 37097,
+    "lines_covered": 37069,
     "lines_total": 54852,
     "lines_percent": 67.6,
-    "functions_covered": 2158,
+    "functions_covered": 2157,
     "functions_total": 2665,
-    "functions_percent": 81.0
+    "functions_percent": 80.9,
+    "branches_covered": 19384,
+    "branches_total": 41809,
+    "branches_percent": 46.4
   }
 }

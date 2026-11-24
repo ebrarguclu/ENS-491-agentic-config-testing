@@ -2,19 +2,19 @@
   "name": "no-http",
   "machine": "Darwin arm64",
   "curl_source": "curl-8_17_0",
-  "date": "2026-11-09 14:53",
+  "date": "2026-11-25 00:44",
   "configure_flags": "--without-libpsl --with-openssl=/opt/homebrew/opt/openssl@3 --disable-http",
   "build": {
     "ok": true,
     "configure_exit": 0,
     "make_exit": 0,
     "tests_build_exit": 0,
-    "seconds": 42
+    "seconds": 40
   },
   "tests": {
     "selection": "all",
     "runtests_exit": 0,
-    "seconds": 192,
+    "seconds": 193,
     "ran": 637,
     "passed": 637,
     "failed": 0,
@@ -101,11 +101,14 @@
     ]
   },
   "coverage": {
-    "lines_covered": 24961,
+    "lines_covered": 24937,
     "lines_total": 42413,
-    "lines_percent": 58.9,
-    "functions_covered": 1621,
+    "lines_percent": 58.8,
+    "functions_covered": 1620,
     "functions_total": 2162,
-    "functions_percent": 75.0
+    "functions_percent": 74.9,
+    "branches_covered": 12061,
+    "branches_total": 31277,
+    "branches_percent": 38.6
   }
 }

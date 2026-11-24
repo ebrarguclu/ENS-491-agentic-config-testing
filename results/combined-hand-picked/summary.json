@@ -1,0 +1,29 @@
+{
+  "kind": "combined",
+  "name": "combined-hand-picked",
+  "machine": "Darwin arm64",
+  "curl_source": "curl-8_17_0",
+  "date": "2026-11-25 01:08",
+  "runs": [
+    "default",
+    "ldaps-no-ldap",
+    "no-cookies",
+    "no-ftp",
+    "no-http",
+    "no-mail",
+    "no-proxy",
+    "no-tls"
+  ],
+  "runs_without_branch_data": [],
+  "coverage": {
+    "lines_covered": 37500,
+    "lines_total": 55469,
+    "lines_percent": 67.6,
+    "functions_covered": 2162,
+    "functions_total": 2670,
+    "functions_percent": 81.0,
+    "branches_covered": 20771,
+    "branches_total": 43283,
+    "branches_percent": 48.0
+  }
+}
