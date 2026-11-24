@@ -111,7 +111,7 @@ in detail at source-code level. The full comparison of all seven systems is in
 | D7 | Tests written by AI, with before/after coverage | [tests/generated/](tests/generated/), [tests/existing/stage2-analysis.md](tests/existing/stage2-analysis.md) | Fethiye Ebrar Güçlü | Done |
 | D8 | Live demo for the advisor | [docs/d8-demo-script.md](docs/d8-demo-script.md) | Fethiye Ebrar Güçlü | Done |
 | D9 | Full configurations and a covering array of them | [models/schema.md](models/schema.md#full-configurations), [models/covering-array/](models/covering-array/README.md) | Safiye Nur Narman, Rana Keleş, Fethiye Ebrar Güçlü | In progress (covering array done) |
-| D10 | Run every configuration, measure line, function and branch coverage, and the combined coverage of all runs | results of the runs | Rana Keleş | Planned |
+| D10 | Run every configuration, measure line, function and branch coverage, and the combined coverage of all runs | [results/d10-results.md](results/d10-results.md), [results/coverage_table.md](results/coverage_table.md) | Rana Keleş | Done |
 | D11 | A step-by-step loop where an AI writes tests for code that is still not covered | generated tests and a log of every round | Fethiye Ebrar Güçlü, Safiye Nur Narman | Planned |
 | D12 | Evaluation: what the AI-written tests added, round by round | evaluation report | Rana Keleş | Planned |
 | D13 | Final report and presentation | report and slides | All | Planned |
